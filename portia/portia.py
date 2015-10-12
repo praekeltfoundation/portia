@@ -10,7 +10,7 @@ class PortiaException(Exception):
 
 class Portia(object):
 
-    ANNOTATION_KEYS = frozenset(['network', 'ported-from', 'do_not_call'])
+    ANNOTATION_KEYS = frozenset(['network', 'ported-from', 'do-not-call'])
 
     def __init__(self, redis, prefix="portia:"):
         self.redis = redis
