@@ -78,7 +78,7 @@ class PortiaServerTest(TestCase):
     @inlineCallbacks
     def test_bad_key(self):
         response = yield self.request('GET', '/lookup/27123456789/foo')
-        content = yield response.content()
+        content = yield response.json()
         self.assertEqual(content, 'Invalid Key: foo')
         self.assertEqual(response.code, 400)
 
@@ -106,6 +106,6 @@ class PortiaServerTest(TestCase):
     def test_annotate_empty(self):
         response = yield self.request('PUT', '/annotate/27123456789/network',
                                       data='')
-        data = yield response.content()
+        data = yield response.json()
         self.assertEqual(data, 'No content supplied')
         self.assertEqual(response.code, 400)

@@ -13,7 +13,7 @@ def validate_key(func):
             portia_server.portia.validate_annotate_key(kwargs['key'])
         except PortiaException, e:
             request.setResponseCode(400)
-            return str(e)
+            return json.dumps(str(e))
 
         return func(portia_server, request, **kwargs)
     return wrapper
@@ -59,7 +59,7 @@ class PortiaServer(object):
 
         if not content:
             request.setResponseCode(400)
-            return 'No content supplied'
+            return json.dumps('No content supplied')
 
         d = self.portia.annotate(msisdn, key, content)
         d.addCallback(lambda _: json.dumps(content))
