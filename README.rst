@@ -13,6 +13,6 @@ Portia
 
 .. image:: https://readthedocs.org/projects/portia/badge/?version=latest
     :target: https://portiadb.readthedocs.org
-    :alt: Portia Documentation
+    :alt: Portia Docs
 
 `Number porting database <http://portiadb.rtfd.org>`_
