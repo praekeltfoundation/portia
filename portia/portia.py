@@ -10,7 +10,12 @@ class PortiaException(Exception):
 
 class Portia(object):
 
-    ANNOTATION_KEYS = frozenset(['network', 'ported-from', 'do-not-call'])
+    ANNOTATION_KEYS = frozenset([
+        'observed-network',
+        'ported-to',
+        'ported-from',
+        'do-not-call',
+    ])
 
     def __init__(self, redis, prefix="portia:"):
         self.redis = redis
@@ -40,7 +45,7 @@ class Portia(object):
         d = gatherResults([
             self.annotate(
                 msisdn,
-                self.validate_annotate_key('network'),
+                self.validate_annotate_key('ported-to'),
                 recipient,
                 timestamp=timestamp),
             self.annotate(

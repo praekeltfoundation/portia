@@ -36,7 +36,7 @@ class PortiaTest(TestCase):
         yield self.portia.import_porting_filename(
             self.fixture_path('sample-db.txt'))
         annotations = yield self.portia.get_annotations('27123456780')
-        self.assertEqual(annotations['network'], 'MNO2')
+        self.assertEqual(annotations['ported-to'], 'MNO2')
         self.assertEqual(annotations['ported-from'], 'MNO1')
 
     @inlineCallbacks
@@ -46,7 +46,7 @@ class PortiaTest(TestCase):
         self.assertTrue((yield self.portia.get_annotations(msisdn)))
         self.assertTrue(
             (yield self.portia.remove_annotations(
-                msisdn, 'network', 'ported-from')))
+                msisdn, 'ported-to', 'ported-from')))
         self.assertFalse((yield self.portia.get_annotations(msisdn)))
 
     @inlineCallbacks
@@ -62,14 +62,14 @@ class PortiaTest(TestCase):
         timestamp1 = datetime.now()
         timestamp2 = datetime.now() - timedelta(days=1)
         yield self.portia.annotate(
-            '27123456789', 'network', 'MNO', timestamp=timestamp1)
+            '27123456789', 'ported-to', 'MNO', timestamp=timestamp1)
         yield self.portia.annotate(
             '27123456789', 'X-foo', 'bar', timestamp=timestamp2)
         observation = yield self.portia.get_annotations(
             '27123456789')
         self.assertEqual(observation, {
-            'network': 'MNO',
-            'network-timestamp': timestamp1.isoformat(),
+            'ported-to': 'MNO',
+            'ported-to-timestamp': timestamp1.isoformat(),
             'X-foo': 'bar',
             'X-foo-timestamp': timestamp2.isoformat()
         })
@@ -78,13 +78,13 @@ class PortiaTest(TestCase):
     def test_remove_annotation(self):
         timestamp = datetime.now()
         yield self.portia.annotate(
-            '27123456789', 'network', 'MNO', timestamp=timestamp)
+            '27123456789', 'ported-to', 'MNO', timestamp=timestamp)
         yield self.portia.annotate(
             '27123456789', 'X-foo', 'bar', timestamp=timestamp)
         yield self.portia.annotate(
             '27123456789', 'X-xxx', '123', timestamp=timestamp)
         yield self.portia.remove_annotations(
-            '27123456789', 'network', 'X-xxx')
+            '27123456789', 'ported-to', 'X-xxx')
         observation = yield self.portia.get_annotations(
             '27123456789')
         self.assertEqual(observation, {
@@ -96,16 +96,16 @@ class PortiaTest(TestCase):
     def test_read_annotation(self):
         timestamp = datetime.now()
         yield self.portia.annotate(
-            '27123456789', 'network', 'MNO', timestamp=timestamp)
+            '27123456789', 'ported-to', 'MNO', timestamp=timestamp)
         yield self.portia.annotate(
             '27123456789', 'X-foo', 'bar', timestamp=timestamp)
         yield self.portia.annotate(
             '27123456789', 'X-xxx', '123', timestamp=timestamp)
         self.assertEqual(
-            (yield self.portia.read_annotation('27123456789', 'network')),
+            (yield self.portia.read_annotation('27123456789', 'ported-to')),
             {
-                'network': 'MNO',
-                'network-timestamp': timestamp.isoformat(),
+                'ported-to': 'MNO',
+                'ported-to-timestamp': timestamp.isoformat(),
             })
 
     @inlineCallbacks

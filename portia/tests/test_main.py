@@ -57,8 +57,8 @@ class PortiaServerTest(TestCase):
         response = yield self.request('GET', '/lookup/27123456789')
         data = yield response.json()
         self.assertEqual(data, {
-            'network': 'MNO2',
-            'network-timestamp': timestamp.isoformat(),
+            'ported-to': 'MNO2',
+            'ported-to-timestamp': timestamp.isoformat(),
             'ported-from': 'MNO1',
             'ported-from-timestamp': timestamp.isoformat(),
         })
@@ -68,11 +68,11 @@ class PortiaServerTest(TestCase):
         timestamp = datetime.now()
         self.portia.import_porting_record(
             '27123456789', 'MNO1', 'MNO2', timestamp)
-        response = yield self.request('GET', '/lookup/27123456789/network')
+        response = yield self.request('GET', '/lookup/27123456789/ported-to')
         data = yield response.json()
         self.assertEqual(data, {
-            'network': 'MNO2',
-            'network-timestamp': timestamp.isoformat(),
+            'ported-to': 'MNO2',
+            'ported-to-timestamp': timestamp.isoformat(),
         })
 
     @inlineCallbacks
@@ -84,27 +84,27 @@ class PortiaServerTest(TestCase):
 
     @inlineCallbacks
     def test_lookup_key_empty(self):
-        response = yield self.request('GET', '/lookup/27123456789/network')
+        response = yield self.request('GET', '/lookup/27123456789/ported-to')
         data = yield response.json()
         self.assertEqual(data, {
-            'network': None,
-            'network-timestamp': None,
+            'ported-to': None,
+            'ported-to-timestamp': None,
         })
 
     @inlineCallbacks
     def test_annotate(self):
-        response = yield self.request('PUT', '/annotate/27123456789/network',
+        response = yield self.request('PUT', '/annotate/27123456789/ported-to',
                                       data='MNO1')
         data = yield response.json()
         self.assertEqual(data, 'MNO1')
         annotation = yield self.portia.read_annotation(
-            '27123456789', 'network')
-        self.assertEqual(annotation['network'], 'MNO1')
-        self.assertTrue(annotation['network-timestamp'])
+            '27123456789', 'ported-to')
+        self.assertEqual(annotation['ported-to'], 'MNO1')
+        self.assertTrue(annotation['ported-to-timestamp'])
 
     @inlineCallbacks
     def test_annotate_empty(self):
-        response = yield self.request('PUT', '/annotate/27123456789/network',
+        response = yield self.request('PUT', '/annotate/27123456789/ported-to',
                                       data='')
         data = yield response.json()
         self.assertEqual(data, 'No content supplied')
