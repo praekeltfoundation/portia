@@ -1,8 +1,6 @@
 Portia
 ======
 
-Number porting database
-
 .. image:: https://img.shields.io/travis/smn/portia.svg
         :target: https://travis-ci.org/smn/portia
 
@@ -16,3 +14,5 @@ Number porting database
 .. image:: https://readthedocs.org/projects/portia/badge/?version=latest
     :target: https://portiadb.readthedocs.org
     :alt: Portia Documentation
+
+`Number porting database <http://portiadb.rtfd.org>`_
