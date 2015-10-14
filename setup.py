@@ -17,9 +17,12 @@ with open('requirements.txt') as req_file:
 with open('requirements-dev.txt') as req_file:
     requirements_dev = req_file.read().split('\n')
 
+with open('VERSION') as fp:
+    version = fp.read().strip()
+
 setup(
     name='portia',
-    version='0.1.0',
+    version=version,
     description="Portia",
     long_description=readme,
     author="Praekelt Foundation",
@@ -36,16 +39,9 @@ setup(
     zip_safe=False,
     keywords='portia',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: ISC License (ISCL)',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
     ],
     entry_points={
         'console_scripts': ['portia = portia.cli:main'],
