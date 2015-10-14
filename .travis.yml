@@ -24,9 +24,9 @@ after_success:
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
-  user: smn
+  user: Praekelt
   password:
-    secure: "to be replaced"
+    secure: "P1LS8nB8TefP3xU9X/gMt3WP5z46Gk655FuXF9js7wluD1g359Qvk0lJNRsoX1zsuAYomD31arp65HKr/BcPgoJVuQQKmxJ0/hAJwM97pWbPZWlD9L3tz9DJAv4kEVMGvazCVH/OYMoUFcv3VvD+mq/N9OK9N3nve2865iAowqoHCFHHZfR5DQ7AhMCkTiOv0lP/xNXqwr/5CP2LQzrG28Fm3+Rx/NkRbS6fYZ49D4WXI1HXYKimLzGX9qsCBpXO87FvAYXqmH+LR91TtZkdfAHxMdA8gxnnjiYveUOHRMc8/Z03Jlabjgcj/RDCz0ekSddA1LA+rDyZJnS8/LHklb3y9WfcbOA+LF051H9Dnr+Bcf4nVXKzVGar3a/mOlqaBwLYhD04Tnzhc4h6rmUF2hUCVQSDM/QSC9Cj90Q/lEoVXpUmAS0eGkg+urIeISZpUxAm2ST/L60o9UFU8Ni3eJ077oFmhDZ8sKnO1xDSbJwkuZ8tQzLd/ETz+x1EPk8tfjw8BL5zna6RAxRV2mmyqUm87aV2ci4JT0fe4kIBcig8Qvu9f0TWWgVE09uH9YRQcI8xzZPOyf4dKJ2iefx7T0JeSCNgLUDHHskKwJG0L/0dLX01wFQrzqonmEgG3mPTOE380MElwxAxeqpcti8b4B6AurnceKo/eF6omkjQ/tA="
   on:
     tags: true
     all_branches: true

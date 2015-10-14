@@ -1,14 +1,14 @@
 Portia
 ======
 
-.. image:: https://img.shields.io/travis/smn/portia.svg
-        :target: https://travis-ci.org/smn/portia
+.. image:: https://img.shields.io/travis/praekelt/portia.svg
+        :target: https://travis-ci.org/praekelt/portia
 
 .. image:: https://img.shields.io/pypi/v/portia.svg
         :target: https://pypi.python.org/pypi/portia
 
-.. image:: https://coveralls.io/repos/smn/portia/badge.png?branch=develop
-    :target: https://coveralls.io/r/smn/portia?branch=develop
+.. image:: https://coveralls.io/repos/praekelt/portia/badge.png?branch=develop
+    :target: https://coveralls.io/r/praekelt/portia?branch=develop
     :alt: Code Coverage
 
 .. image:: https://readthedocs.org/projects/portia/badge/?version=latest

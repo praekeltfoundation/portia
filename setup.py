@@ -22,9 +22,9 @@ setup(
     version='0.1.0',
     description="Portia",
     long_description=readme,
-    author="Simon de Haan",
-    author_email='simon@praekeltfoundation.org',
-    url='https://github.com/smn/portia',
+    author="Praekelt Foundation",
+    author_email='dev@praekeltfoundation.org',
+    url='https://github.com/praekelt/portia',
     packages=[
         'portia',
     ],
