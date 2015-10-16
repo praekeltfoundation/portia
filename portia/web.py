@@ -6,7 +6,7 @@ from twisted.internet import reactor
 
 from klein import Klein
 
-from .portia import PortiaException
+from .exceptions import PortiaException
 
 
 def validate_key(func):

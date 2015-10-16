@@ -6,13 +6,7 @@ from twisted.internet.protocol import Factory
 from twisted.internet.defer import maybeDeferred
 from twisted.protocols.basic import LineReceiver
 
-
-class JsonProtocolException(Exception):
-    def __init__(self, message, command, reference_id):
-        super(JsonProtocolException, self).__init__(message)
-        self.message = message
-        self.command = command
-        self.reference_id = reference_id
+from .exceptions import JsonProtocolException
 
 
 class JsonProtocol(LineReceiver):

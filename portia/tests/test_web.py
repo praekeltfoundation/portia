@@ -6,12 +6,11 @@ from twisted.web.client import HTTPConnectionPool
 from twisted.web.server import Site
 from twisted.trial.unittest import TestCase
 
-import txredisapi
-
 import treq
 
 from portia.web import PortiaWebServer
 from portia.portia import Portia
+from portia import utils
 
 
 class PortiaServerTest(TestCase):
@@ -20,14 +19,13 @@ class PortiaServerTest(TestCase):
 
     @inlineCallbacks
     def setUp(self):
-        self.redis = yield txredisapi.Connection()
+        self.redis = yield utils.start_redis()
         self.addCleanup(self.redis.disconnect)
         self.portia = Portia(self.redis)
-        self.portia_server = PortiaWebServer(self.portia)
-        self.addCleanup(self.portia_server.portia.flush)
+        self.addCleanup(self.portia.flush)
 
-        self.site = Site(self.portia_server.app.resource())
-        self.listener = reactor.listenTCP(0, self.site, interface='localhost')
+        self.portia_server = PortiaWebServer(self.portia)
+        self.listener = yield utils.start_webserver(self.portia, 'tcp:0')
         self.listener_port = self.listener.getHost().port
         self.addCleanup(self.listener.loseConnection)
 

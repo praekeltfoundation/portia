@@ -3,9 +3,7 @@ from datetime import datetime
 
 from twisted.internet.defer import gatherResults, succeed
 
-
-class PortiaException(Exception):
-    pass
+from .exceptions import PortiaException
 
 
 class Portia(object):

@@ -1,28 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys
-from urlparse import urlparse
+
+from twisted.python import log
+from twisted.internet import reactor
+from twisted.internet.defer import gatherResults
+from twisted.internet.task import react
+
+from .portia import Portia
 
 import click
-
-
-class UrlType(click.ParamType):
-    name = 'uri'
-
-    def convert(self, value, param, ctx):
-        try:
-            url = urlparse(value)
-        except (AttributeError, TypeError):
-            self.fail('Invalid url: %s.' % (value,), param, ctx)
-
-        if not url.hostname:
-            self.fail('Missing Redis hostname.')
-
-        try:
-            int(url.path[1:])
-        except (IndexError, ValueError):
-            self.fail('Invalid Redis db index.')
-
-        return url
 
 
 @click.group()
@@ -33,7 +19,7 @@ def main():
 @main.command()
 @click.option('--redis-uri', default='redis://localhost:6379/1',
               help='The redis://hostname:port/db to connect to.',
-              type=UrlType())
+              type=str)
 @click.option('--web/--no-web', default=True)
 @click.option('--web-endpoint', default='tcp:8000', type=str)
 @click.option('--tcp/--no-tcp', default=False)
@@ -47,33 +33,20 @@ def main():
               default=sys.stdout)
 def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
         prefix, logfile):
-    from .portia import Portia
-    from .web import PortiaWebServer
-    from .protocol import JsonProtocolFactory
-    from twisted.internet import reactor
-    from twisted.internet.endpoints import serverFromString
-    from twisted.python import log
-    from twisted.web.server import Site
-    from txredisapi import Connection
-
+    from .utils import start_redis, start_webserver, start_tcpserver
     log.startLogging(logfile)
+    d = start_redis(redis_uri)
+    d.addCallback(Portia, prefix=prefix)
 
-    d = Connection(redis_uri.hostname, int(redis_uri.port or 6379),
-                   int(redis_uri.path[1:]))
-    d.addCallback(lambda redis: Portia(redis, prefix=prefix))
-
-    def start_portia(portia):
-        if tcp:
-            tcp_ep = serverFromString(reactor, str(tcp_endpoint))
-            tcp_ep.listen(JsonProtocolFactory(portia))
-
+    def start_servers(portia):
+        callbacks = []
         if web:
-            web_ep = serverFromString(reactor, str(web_endpoint))
-            web_ep.listen(Site(PortiaWebServer(portia).app.resource()))
+            callbacks.append(start_webserver(portia, web_endpoint))
+        if tcp:
+            callbacks.append(start_tcpserver(portia, tcp_endpoint))
+        return gatherResults(callbacks)
 
-    d.addCallback(start_portia)
-    d.addErrback(log.err)
-
+    d.addCallback(start_servers)
     reactor.run()
 
 
@@ -85,7 +58,7 @@ def import_():
 @import_.command('porting-db')
 @click.option('--redis-uri', default='redis://localhost:6379/1',
               help='The redis://hostname:port/db to connect to.',
-              type=UrlType())
+              type=str)
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
@@ -97,16 +70,10 @@ def import_():
               help='Whether the CSV file has a header or not.')
 @click.argument('file', type=click.File())
 def import_porting_db(redis_uri, prefix, logfile, header, file):
-    from .portia import Portia
-    from twisted.internet.task import react
-    from twisted.python import log
-    from txredisapi import Connection
-
+    from .utils import start_redis, start_webserver, start_tcpserver
     log.startLogging(logfile)
-
-    d = Connection(redis_uri.hostname, int(redis_uri.port or 6379),
-                   int(redis_uri.path[1:]))
-    d.addCallback(lambda redis: Portia(redis, prefix=prefix))
+    d = start_redis(redis_uri)
+    d.addCallback(Portia, prefix=prefix)
     d.addCallback(lambda portia: portia.import_porting_file(file, header))
     d.addCallback(
         lambda msisdns: [

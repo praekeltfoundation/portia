@@ -6,8 +6,7 @@ from datetime import datetime, timedelta
 from twisted.internet.defer import inlineCallbacks
 from twisted.trial.unittest import TestCase
 
-import txredisapi
-
+from portia import utils
 from portia.portia import Portia
 
 
@@ -17,7 +16,7 @@ class PortiaTest(TestCase):
 
     @inlineCallbacks
     def setUp(self):
-        self.redis = yield txredisapi.Connection()
+        self.redis = yield utils.start_redis()
         self.portia = Portia(self.redis, network_prefix_mapping=json.load(
             pkg_resources.resource_stream(
                 'portia', 'assets/network-prefix-mapping.json')))

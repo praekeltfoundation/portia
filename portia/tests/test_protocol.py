@@ -7,10 +7,9 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, maybeDeferred, Deferred
 from twisted.test.proto_helpers import StringTransportWithDisconnection
 
-from txredisapi import Connection
-
 from portia.portia import Portia
 from portia.protocol import JsonProtocol, JsonProtocolFactory
+from portia import utils
 
 
 class ProtocolTest(TestCase):
@@ -19,12 +18,14 @@ class ProtocolTest(TestCase):
 
     @inlineCallbacks
     def setUp(self):
-        self.redis = yield Connection()
+        self.redis = yield utils.start_redis()
         self.addCleanup(self.redis.disconnect)
 
-        self.portia = Portia(self.redis, network_prefix_mapping=json.load(
-            pkg_resources.resource_stream(
-                'portia', 'assets/network-prefix-mapping.json')))
+        self.portia = Portia(
+            self.redis,
+            network_prefix_mapping=json.load(
+                pkg_resources.resource_stream(
+                    'portia', 'assets/network-prefix-mapping.json')))
         self.addCleanup(self.portia.flush)
 
         self.proto = JsonProtocol(self.portia)
