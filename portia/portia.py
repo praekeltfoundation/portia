@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 
-from twisted.internet.defer import gatherResults, succeed
+from twisted.internet.defer import gatherResults, succeed, maybeDeferred
 
 from .exceptions import PortiaException
 
@@ -103,26 +103,30 @@ class Portia(object):
 
     def annotate(self, msisdn, key, value, timestamp=None):
         timestamp = timestamp or datetime.utcnow()
-        key = self.validate_annotate_key(key)
-        return self.redis.hmset(
+        d = maybeDeferred(self.validate_annotate_key, key)
+        d.addCallback(lambda key: self.redis.hmset(
             self.key(msisdn), {
                 key: value,
                 '%s-timestamp' % (key,): timestamp.isoformat(),
-            })
+            }))
+        return d
 
     def get_annotations(self, msisdn):
         return self.redis.hgetall(self.key(msisdn))
 
     def remove_annotations(self, msisdn, *keys):
-        keys = [self.validate_annotate_key(key) for key in keys]
-        keys.extend(['%s-timestamp' % (key,) for key in keys])
-        return self.redis.hdel(self.key(msisdn), keys),
+        d = gatherResults([
+            maybeDeferred(self.validate_annotate_key, key) for key in keys])
+        d.addCallback(lambda keys: keys + [
+            '%s-timestamp' % (key,) for key in keys])
+        d.addCallback(lambda keys: self.redis.hdel(self.key(msisdn), keys))
+        return d
 
     def read_annotation(self, msisdn, key):
-        d = self.redis.hmget(
-            self.key(msisdn),
-            [self.validate_annotate_key(key),
-             '%s-timestamp' % (key,)])
+        d = maybeDeferred(self.validate_annotate_key, key)
+        d.addCallback(lambda key: [key, '%s-timestamp' % (key,)])
+        d.addCallback(
+            lambda keys: self.redis.hmget(self.key(msisdn), keys))
         d.addCallback(lambda values: {
             key: values[0],
             '%s-timestamp' % (key,): values[1],

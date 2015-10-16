@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
+import json
+import pkg_resources
 
 from twisted.python import log
 from twisted.internet import reactor
@@ -36,7 +38,9 @@ def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
     from .utils import start_redis, start_webserver, start_tcpserver
     log.startLogging(logfile)
     d = start_redis(redis_uri)
-    d.addCallback(Portia, prefix=prefix)
+    d.addCallback(Portia, prefix=prefix, network_prefix_mapping=json.load(
+        pkg_resources.resource_stream(
+            'portia', 'assets/network-prefix-mapping.json')))
 
     def start_servers(portia):
         callbacks = []

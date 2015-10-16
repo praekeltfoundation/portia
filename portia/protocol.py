@@ -44,6 +44,7 @@ class JsonProtocol(LineReceiver):
 
         d = handler(**data.get('request'))
         d.addCallback(self.reply, command, reference_id)
+        d.addErrback(self.error, command, reference_id)
         return d
 
     def reply(self, data, cmd, reference_id):
@@ -56,19 +57,19 @@ class JsonProtocol(LineReceiver):
             'response': data,
         }))
 
-    def error(self, failure):
-        exc = failure.trap(JsonProtocolException)
+    def error(self, failure, command=None, reference_id=None):
+        exc = failure.check(JsonProtocolException)
         if exc == JsonProtocolException:
-            command = failure.value.command
-            reference_id = failure.value.reference_id
+            cmd = failure.value.command
+            ref_id = failure.value.reference_id
         else:
-            command = None
-            reference_id = None
+            cmd = command
+            ref_id = reference_id
 
         self.sendLine(json.dumps({
             'status': 'error',
-            'reference_cmd': command,
-            'reference_id': reference_id,
+            'reference_cmd': cmd,
+            'reference_id': ref_id,
             'message': failure.getErrorMessage(),
             'version': self.version,
         }))
