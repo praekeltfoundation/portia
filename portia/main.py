@@ -36,14 +36,14 @@ class PortiaServer(object):
         self.debug = debug
         self.portia = Portia(redis, prefix=prefix)
 
-    @app.route('/lookup/<msisdn>', methods=['GET'])
+    @app.route('/entry/<msisdn>', methods=['GET'])
     def get_annotations(self, request, msisdn):
         request.setHeader('Content-Type', 'application/json')
         d = self.portia.get_annotations(msisdn)
         d.addCallback(lambda data: json.dumps(data))
         return d
 
-    @app.route('/lookup/<msisdn>/<key>', methods=['GET'])
+    @app.route('/entry/<msisdn>/<key>', methods=['GET'])
     @validate_key
     def read_annotation(self, request, msisdn, key):
         request.setHeader('Content-Type', 'application/json')
@@ -51,7 +51,7 @@ class PortiaServer(object):
         d.addCallback(lambda data: json.dumps(data))
         return d
 
-    @app.route('/annotate/<msisdn>/<key>', methods=['PUT'])
+    @app.route('/entry/<msisdn>/<key>', methods=['PUT'])
     @validate_key
     def annotate(self, request, msisdn, key):
         content = request.content.read()

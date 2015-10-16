@@ -45,7 +45,7 @@ class PortiaServerTest(TestCase):
 
     @inlineCallbacks
     def test_lookup_empty(self):
-        response = yield self.request('GET', '/lookup/27123456789')
+        response = yield self.request('GET', '/entry/27123456789')
         data = yield response.json()
         self.assertEqual(data, {})
 
@@ -54,7 +54,7 @@ class PortiaServerTest(TestCase):
         timestamp = datetime.now()
         self.portia.import_porting_record(
             '27123456789', 'MNO1', 'MNO2', timestamp)
-        response = yield self.request('GET', '/lookup/27123456789')
+        response = yield self.request('GET', '/entry/27123456789')
         data = yield response.json()
         self.assertEqual(data, {
             'ported-to': 'MNO2',
@@ -68,7 +68,7 @@ class PortiaServerTest(TestCase):
         timestamp = datetime.now()
         self.portia.import_porting_record(
             '27123456789', 'MNO1', 'MNO2', timestamp)
-        response = yield self.request('GET', '/lookup/27123456789/ported-to')
+        response = yield self.request('GET', '/entry/27123456789/ported-to')
         data = yield response.json()
         self.assertEqual(data, {
             'ported-to': 'MNO2',
@@ -77,14 +77,14 @@ class PortiaServerTest(TestCase):
 
     @inlineCallbacks
     def test_bad_key(self):
-        response = yield self.request('GET', '/lookup/27123456789/foo')
+        response = yield self.request('GET', '/entry/27123456789/foo')
         content = yield response.json()
         self.assertEqual(content, 'Invalid Key: foo')
         self.assertEqual(response.code, 400)
 
     @inlineCallbacks
     def test_lookup_key_empty(self):
-        response = yield self.request('GET', '/lookup/27123456789/ported-to')
+        response = yield self.request('GET', '/entry/27123456789/ported-to')
         data = yield response.json()
         self.assertEqual(data, {
             'ported-to': None,
@@ -93,7 +93,7 @@ class PortiaServerTest(TestCase):
 
     @inlineCallbacks
     def test_annotate(self):
-        response = yield self.request('PUT', '/annotate/27123456789/ported-to',
+        response = yield self.request('PUT', '/entry/27123456789/ported-to',
                                       data='MNO1')
         data = yield response.json()
         self.assertEqual(data, 'MNO1')
@@ -104,7 +104,7 @@ class PortiaServerTest(TestCase):
 
     @inlineCallbacks
     def test_annotate_empty(self):
-        response = yield self.request('PUT', '/annotate/27123456789/ported-to',
+        response = yield self.request('PUT', '/entry/27123456789/ported-to',
                                       data='')
         data = yield response.json()
         self.assertEqual(data, 'No content supplied')
