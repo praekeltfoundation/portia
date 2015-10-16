@@ -34,12 +34,8 @@ def main():
 @click.option('--redis-uri', default='redis://localhost:6379/1',
               help='The redis://hostname:port/db to connect to.',
               type=UrlType())
-@click.option('--interface', default='localhost',
-              help='The interface to bind to.',
-              type=str)
-@click.option('--port', default=8000,
-              help='The TCP port to listen on.',
-              type=int)
+@click.option('--web/--no-web', default=True)
+@click.option('--web-endpoint', default='tcp:8000', type=str)
 @click.option('--tcp/--no-tcp', default=False)
 @click.option('--tcp-endpoint', default='tcp:8001', type=str)
 @click.option('--prefix', default='bayes:',
@@ -49,16 +45,15 @@ def main():
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
-@click.option('--debug/--no-debug', default=False,
-              help='Log debug output or not.')
-def run(redis_uri, interface, port, tcp, tcp_endpoint,
-        prefix, logfile, debug):
+def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
+        prefix, logfile):
     from .portia import Portia
     from .web import PortiaWebServer
     from .protocol import JsonProtocolFactory
     from twisted.internet import reactor
     from twisted.internet.endpoints import serverFromString
     from twisted.python import log
+    from twisted.web.server import Site
     from txredisapi import Connection
 
     log.startLogging(logfile)
@@ -69,11 +64,12 @@ def run(redis_uri, interface, port, tcp, tcp_endpoint,
 
     def start_portia(portia):
         if tcp:
-            endpoint = serverFromString(reactor, str(tcp_endpoint))
-            endpoint.listen(JsonProtocolFactory(portia))
+            tcp_ep = serverFromString(reactor, str(tcp_endpoint))
+            tcp_ep.listen(JsonProtocolFactory(portia))
 
-        web = PortiaWebServer(portia, debug=debug)
-        web.run(interface, port)
+        if web:
+            web_ep = serverFromString(reactor, str(web_endpoint))
+            web_ep.listen(Site(PortiaWebServer(portia).app.resource()))
 
     d.addCallback(start_portia)
     d.addErrback(log.err)
@@ -97,12 +93,10 @@ def import_():
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
-@click.option('--debug/--no-debug', default=True,
-              help='Log debug output or not.')
 @click.option('--header/--no-header', default=True,
               help='Whether the CSV file has a header or not.')
 @click.argument('file', type=click.File())
-def import_porting_db(redis_uri, prefix, logfile, debug, header, file):
+def import_porting_db(redis_uri, prefix, logfile, header, file):
     from .portia import Portia
     from twisted.internet.task import react
     from twisted.python import log

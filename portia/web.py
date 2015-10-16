@@ -35,8 +35,7 @@ class PortiaWebServer(object):
     clock = reactor
     timeout = 5
 
-    def __init__(self, portia, debug=False):
-        self.debug = debug
+    def __init__(self, portia):
         self.portia = portia
 
     @app.route('/resolve/<msisdn>', methods=['GET'])

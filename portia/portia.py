@@ -77,7 +77,7 @@ class Portia(object):
                 if isinstance(value, dict):
                     return self.network_prefix_lookup(msisdn, value)
                 return succeed(value)
-        return succeed('UNKNOWN')
+        return succeed(None)
 
     def resolve_cb(self, annotations, msisdn):
         observed_network = annotations.get('observed-network')

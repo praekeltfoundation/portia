@@ -1,4 +1,5 @@
 import json
+import pkg_resources
 from datetime import datetime
 
 from twisted.trial.unittest import TestCase
@@ -21,7 +22,9 @@ class ProtocolTest(TestCase):
         self.redis = yield Connection()
         self.addCleanup(self.redis.disconnect)
 
-        self.portia = Portia(self.redis)
+        self.portia = Portia(self.redis, network_prefix_mapping=json.load(
+            pkg_resources.resource_stream(
+                'portia', 'assets/network-prefix-mapping.json')))
         self.addCleanup(self.portia.flush)
 
         self.proto = JsonProtocol(self.portia)
@@ -46,6 +49,7 @@ class ProtocolTest(TestCase):
 
         def check(d):
             val = self.transport.value()
+            self.transport.clear()
             if val:
                 d.callback(json.loads(val))
                 return
@@ -132,3 +136,28 @@ class ProtocolTest(TestCase):
             'X-Foo': 'Bar',
             'X-Foo-timestamp': timestamp.isoformat(),
         })
+
+    @inlineCallbacks
+    def test_resolve_observed_network(self):
+        result = yield self.send_command('annotate', msisdn='27123456789',
+                                         key='observed-network', value='MNO')
+        result = yield self.send_command('resolve', msisdn='27123456789')
+        response = result['response']
+        self.assertEqual(response['network'], 'MNO')
+        self.assertEqual(response['strategy'], 'observation')
+
+    @inlineCallbacks
+    def test_resolve_ported_network(self):
+        result = yield self.send_command('annotate', msisdn='27123456789',
+                                         key='ported-to', value='MNO')
+        result = yield self.send_command('resolve', msisdn='27123456789')
+        response = result['response']
+        self.assertEqual(response['network'], 'MNO')
+        self.assertEqual(response['strategy'], 'porting-db')
+
+    @inlineCallbacks
+    def test_resolve_prefix_guess(self):
+        result = yield self.send_command('resolve', msisdn='27761234567')
+        response = result['response']
+        self.assertEqual(response['network'], 'VODACOM')
+        self.assertEqual(response['strategy'], 'prefix-guess')

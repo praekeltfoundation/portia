@@ -37,12 +37,34 @@ Importing database files
 
    (ve)$ portia import porting-db path/to/file.csv
 
-Running the server
-------------------
+Running the web server
+----------------------
 
 ::
 
    (ve)$ portia run
+   2015-10-16 18:22:35+0200 [-] Log opened.
+   2015-10-16 18:22:35+0200 [-] Starting factory <txredisapi.RedisFactory instance at 0x105b3bea8>
+   2015-10-16 18:22:35+0200 [HiredisProtocol,client] Site starting on 8000
+   2015-10-16 18:22:35+0200 [-] Starting factory <twisted.web.server.Site instance at 0x105b6ef80>
+
+By default this will listen on ``localhost:8000``.
+
+Running the TCP socket server
+-----------------------------
+
+::
+
+   (ve)$ portia run --tcp
+   2015-10-16 18:22:51+0200 [-] Log opened.
+   2015-10-16 18:22:51+0200 [-] Starting factory <txredisapi.RedisFactory instance at 0x10a969ea8>
+   2015-10-16 18:22:51+0200 [HiredisProtocol,client] JsonProtocolFactory starting on 8001
+   2015-10-16 18:22:51+0200 [-] Starting factory <portia.protocol.JsonProtocolFactory instance at 0x10a99cf38>
+   2015-10-16 18:22:51+0200 [HiredisProtocol,client] Site starting on 8000
+   2015-10-16 18:22:51+0200 [-] Starting factory <twisted.web.server.Site instance at 0x10a9a03b0>
+
+By default this will listen on ``localhost:8001``. You can specify a different
+endpoint with ``--tcp-endpoint=tcp:8080:interface=127.0.0.1`` as an example
 
 Querying
 --------
