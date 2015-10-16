@@ -49,7 +49,7 @@ Querying
 
 Looking up everything for a known phone number::
 
-   $ curl http://localhost:8000/lookup/27123456780
+   $ curl http://localhost:8000/entry/27123456780
    {
      "ported-to-timestamp": "2015-10-11T00:00:00",
      "ported-from": "MNO1",
@@ -59,7 +59,7 @@ Looking up everything for a known phone number::
 
 Looking up a single key for a phone number::
 
-   $ curl http://localhost:8000/lookup/27123456780/ported-to
+   $ curl http://localhost:8000/entry/27123456780/ported-to
    {
      "ported-to": "MNO2",
      "ported-to-timestamp": "2015-10-11T00:00:00"
@@ -77,10 +77,10 @@ Portia has a number of defined annotations that it supports, these are:
 
 Adding an observed network annotation for a phone number::
 
-   $ curl -XPUT -d MNO3 http://localhost:8000/annotate/27123456780/observed-network
+   $ curl -XPUT -d MNO3 http://localhost:8000/entry/27123456780/observed-network
    "MNO3"
 
-   $ curl http://localhost:8000/lookup/27123456780/observed-network
+   $ curl http://localhost:8000/entry/27123456780/observed-network
    {
      "ported-to": "MNO2",
      "ported-to-timestamp": "2015-10-11T00:00:00",
@@ -92,5 +92,5 @@ Adding an observed network annotation for a phone number::
 
 Custom annotations are allowed if the key is prefixed with ``X-``::
 
-   $ curl -XPUT -d bar http://localhost:8000/annotate/27123456780/X-foo
+   $ curl -XPUT -d bar http://localhost:8000/entry/27123456780/X-foo
    "bar"
