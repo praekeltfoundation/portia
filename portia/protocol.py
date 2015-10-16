@@ -62,9 +62,6 @@ class JsonProtocol(LineReceiver):
         if exc == JsonProtocolException:
             cmd = failure.value.command
             ref_id = failure.value.reference_id
-        else:
-            cmd = command
-            ref_id = reference_id
 
         self.sendLine(json.dumps({
             'status': 'error',

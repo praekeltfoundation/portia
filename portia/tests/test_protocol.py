@@ -28,11 +28,10 @@ class ProtocolTest(TestCase):
                     'portia', 'assets/network-prefix-mapping.json')))
         self.addCleanup(self.portia.flush)
 
-        self.proto = JsonProtocol(self.portia)
+        factory = JsonProtocolFactory(self.portia)
+        self.proto = factory.buildProtocol()
         self.transport = StringTransportWithDisconnection()
         self.proto.makeConnection(self.transport)
-        self.transport.protocol = self.proto
-        self.proto.factory = JsonProtocolFactory(self.portia)
 
     def send_command(self, cmd, id=1, **kwargs):
         data = {
