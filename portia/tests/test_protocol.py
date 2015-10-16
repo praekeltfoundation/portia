@@ -8,7 +8,7 @@ from twisted.internet.defer import inlineCallbacks, maybeDeferred, Deferred
 from twisted.test.proto_helpers import StringTransportWithDisconnection
 
 from portia.portia import Portia
-from portia.protocol import JsonProtocol, JsonProtocolFactory
+from portia.protocol import JsonProtocolFactory
 from portia import utils
 
 

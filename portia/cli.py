@@ -74,7 +74,7 @@ def import_():
               help='Whether the CSV file has a header or not.')
 @click.argument('file', type=click.File())
 def import_porting_db(redis_uri, prefix, logfile, header, file):
-    from .utils import start_redis, start_webserver, start_tcpserver
+    from .utils import start_redis
     log.startLogging(logfile)
     d = start_redis(redis_uri)
     d.addCallback(Portia, prefix=prefix)
