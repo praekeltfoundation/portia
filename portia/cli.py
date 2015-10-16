@@ -40,6 +40,8 @@ def main():
 @click.option('--port', default=8000,
               help='The TCP port to listen on.',
               type=int)
+@click.option('--tcp/--no-tcp', default=False)
+@click.option('--tcp-endpoint', default='tcp:8001', type=str)
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
@@ -49,9 +51,13 @@ def main():
               default=sys.stdout)
 @click.option('--debug/--no-debug', default=False,
               help='Log debug output or not.')
-def run(redis_uri, interface, port, prefix, logfile, debug):
-    from .main import PortiaServer
+def run(redis_uri, interface, port, tcp, tcp_endpoint,
+        prefix, logfile, debug):
+    from .portia import Portia
+    from .web import PortiaWebServer
+    from .protocol import JsonProtocolFactory
     from twisted.internet import reactor
+    from twisted.internet.endpoints import serverFromString
     from twisted.python import log
     from txredisapi import Connection
 
@@ -59,9 +65,18 @@ def run(redis_uri, interface, port, prefix, logfile, debug):
 
     d = Connection(redis_uri.hostname, int(redis_uri.port or 6379),
                    int(redis_uri.path[1:]))
-    d.addCallback(
-        lambda redis: PortiaServer(redis, prefix=prefix, debug=debug))
-    d.addCallback(lambda portia: portia.app.run(interface, port))
+    d.addCallback(lambda redis: Portia(redis, prefix=prefix))
+
+    def start_portia(portia):
+        if tcp:
+            endpoint = serverFromString(reactor, str(tcp_endpoint))
+            endpoint.listen(JsonProtocolFactory(portia))
+
+        web = PortiaWebServer(portia, debug=debug)
+        web.run(interface, port)
+
+    d.addCallback(start_portia)
+    d.addErrback(log.err)
 
     reactor.run()
 

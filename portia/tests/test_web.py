@@ -10,7 +10,8 @@ import txredisapi
 
 import treq
 
-from portia.main import PortiaServer
+from portia.web import PortiaWebServer
+from portia.portia import Portia
 
 
 class PortiaServerTest(TestCase):
@@ -21,8 +22,8 @@ class PortiaServerTest(TestCase):
     def setUp(self):
         self.redis = yield txredisapi.Connection()
         self.addCleanup(self.redis.disconnect)
-        self.portia_server = PortiaServer(self.redis)
-        self.portia = self.portia_server.portia
+        self.portia = Portia(self.redis)
+        self.portia_server = PortiaWebServer(self.portia)
         self.addCleanup(self.portia_server.portia.flush)
 
         self.site = Site(self.portia_server.app.resource())

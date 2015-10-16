@@ -1,9 +1,12 @@
 import json
 from functools import wraps
 
+from twisted.web.server import Site
+from twisted.internet import reactor
+
 from klein import Klein
 
-from .portia import Portia, PortiaException
+from .portia import PortiaException
 
 
 def validate_key(func):
@@ -19,7 +22,7 @@ def validate_key(func):
     return wrapper
 
 
-class PortiaServer(object):
+class PortiaWebServer(object):
     """
     Portia, Number portability as a service
     An API for doing: phone number network lookups.
@@ -29,12 +32,12 @@ class PortiaServer(object):
     """
 
     app = Klein()
+    clock = reactor
     timeout = 5
 
-    def __init__(self, redis, prefix="portia:", debug=False):
-        self.redis = redis
+    def __init__(self, portia, debug=False):
         self.debug = debug
-        self.portia = Portia(redis, prefix=prefix)
+        self.portia = portia
 
     @app.route('/resolve/<msisdn>', methods=['GET'])
     def resolve(self, request, msisdn):
@@ -71,3 +74,7 @@ class PortiaServer(object):
         d = self.portia.annotate(msisdn, key, content)
         d.addCallback(lambda _: json.dumps(content))
         return d
+
+    def run(self, interface, port):
+        site = Site(self.app.resource())
+        return self.clock.listenTCP(port, site, interface=interface)
