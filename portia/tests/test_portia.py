@@ -1,4 +1,5 @@
 import os
+import json
 import pkg_resources
 from datetime import datetime, timedelta
 
@@ -17,7 +18,9 @@ class PortiaTest(TestCase):
     @inlineCallbacks
     def setUp(self):
         self.redis = yield txredisapi.Connection()
-        self.portia = Portia(self.redis)
+        self.portia = Portia(self.redis, network_prefix_mapping=json.load(
+            pkg_resources.resource_stream(
+                'portia', 'assets/network-prefix-mapping.json')))
         self.addCleanup(self.redis.disconnect)
         self.addCleanup(self.portia.flush)
 
@@ -116,3 +119,31 @@ class PortiaTest(TestCase):
         self.assertTrue((yield self.portia.remove(msisdn)))
         # Now, nothing's being removed, should return False
         self.assertFalse((yield self.portia.remove(msisdn)))
+
+    @inlineCallbacks
+    def test_resolve_porting_db(self):
+        msisdn = yield self.portia.import_porting_record(
+            '27123456789', 'DONOR', 'RECIPIENT', datetime.now())
+        result = yield self.portia.resolve(msisdn)
+        self.assertEqual(result['network'], 'RECIPIENT')
+        self.assertEqual(result['strategy'], 'porting-db')
+
+    @inlineCallbacks
+    def test_resolve_observation(self):
+        yield self.portia.annotate(
+            '27123456789', 'observed-network', 'MNO')
+        result = yield self.portia.resolve('27123456789')
+        self.assertEqual(result['network'], 'MNO')
+        self.assertEqual(result['strategy'], 'observation')
+
+    @inlineCallbacks
+    def test_resolve_prefix_guess(self):
+        result = yield self.portia.resolve('27763456789')
+        self.assertEqual(result['network'], 'VODACOM')
+        self.assertEqual(result['strategy'], 'prefix-guess')
+
+    @inlineCallbacks
+    def test_resolve_prefix_guess_unknown(self):
+        result = yield self.portia.resolve('000000000000')
+        self.assertEqual(result['network'], 'UNKNOWN')
+        self.assertEqual(result['strategy'], 'prefix-guess')

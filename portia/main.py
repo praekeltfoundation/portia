@@ -36,6 +36,13 @@ class PortiaServer(object):
         self.debug = debug
         self.portia = Portia(redis, prefix=prefix)
 
+    @app.route('/resolve/<msisdn>', methods=['GET'])
+    def resolve(self, request, msisdn):
+        request.setHeader('Content-Type', 'application/json')
+        d = self.portia.resolve(msisdn)
+        d.addCallback(lambda data: json.dumps(data))
+        return d
+
     @app.route('/entry/<msisdn>', methods=['GET'])
     def get_annotations(self, request, msisdn):
         request.setHeader('Content-Type', 'application/json')

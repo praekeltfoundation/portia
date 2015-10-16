@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 
-from twisted.internet.defer import gatherResults
+from twisted.internet.defer import gatherResults, succeed
 
 
 class PortiaException(Exception):
@@ -17,9 +17,10 @@ class Portia(object):
         'do-not-call',
     ])
 
-    def __init__(self, redis, prefix="portia:"):
+    def __init__(self, redis, prefix="portia:", network_prefix_mapping=None):
         self.redis = redis
         self.prefix = prefix
+        self.network_prefix_mapping = network_prefix_mapping or {}
 
     def key(self, *parts):
         return '%s%s' % (self.prefix, ':'.join(parts))
@@ -64,6 +65,43 @@ class Portia(object):
         if key not in self.ANNOTATION_KEYS and not key.startswith('X-'):
             raise PortiaException('Invalid Key: %s' % (key,))
         return key
+
+    def resolve(self, msisdn):
+        d = self.get_annotations(msisdn)
+        d.addCallback(self.resolve_cb, msisdn)
+        return d
+
+    def network_prefix_lookup(self, msisdn, mapping):
+        for key, value in mapping.iteritems():
+            if msisdn.startswith(str(key)):
+                if isinstance(value, dict):
+                    return self.network_prefix_lookup(msisdn, value)
+                return succeed(value)
+        return succeed('UNKNOWN')
+
+    def resolve_cb(self, annotations, msisdn):
+        observed_network = annotations.get('observed-network')
+        if observed_network:
+            return {
+                'network': observed_network,
+                'strategy': 'observation',
+                'entry': annotations,
+            }
+        ported_to = annotations.get('ported-to')
+        if ported_to:
+            return {
+                'network': ported_to,
+                'strategy': 'porting-db',
+                'entry': annotations,
+            }
+
+        d = self.network_prefix_lookup(msisdn, self.network_prefix_mapping)
+        d.addCallback(lambda network: {
+            'network': network,
+            'strategy': 'prefix-guess',
+            'entry': annotations,
+        })
+        return d
 
     def annotate(self, msisdn, key, value, timestamp=None):
         timestamp = timestamp or datetime.utcnow()
