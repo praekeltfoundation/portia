@@ -1,7 +1,6 @@
 import json
 from functools import wraps
 
-from twisted.web.server import Site
 from twisted.internet import reactor
 
 from klein import Klein
@@ -73,7 +72,3 @@ class PortiaWebServer(object):
         d = self.portia.annotate(msisdn, key, content)
         d.addCallback(lambda _: json.dumps(content))
         return d
-
-    def run(self, interface, port):
-        site = Site(self.app.resource())
-        return self.clock.listenTCP(port, site, interface=interface)

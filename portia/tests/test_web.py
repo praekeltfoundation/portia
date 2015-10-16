@@ -1,9 +1,10 @@
+import json
+import pkg_resources
 from datetime import datetime
 
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.web.client import HTTPConnectionPool
-from twisted.web.server import Site
 from twisted.trial.unittest import TestCase
 
 import treq
@@ -21,7 +22,9 @@ class PortiaServerTest(TestCase):
     def setUp(self):
         self.redis = yield utils.start_redis()
         self.addCleanup(self.redis.disconnect)
-        self.portia = Portia(self.redis)
+        self.portia = Portia(self.redis, network_prefix_mapping=json.load(
+            pkg_resources.resource_stream(
+                'portia', 'assets/network-prefix-mapping.json')))
         self.addCleanup(self.portia.flush)
 
         self.portia_server = PortiaWebServer(self.portia)
@@ -108,3 +111,26 @@ class PortiaServerTest(TestCase):
         data = yield response.json()
         self.assertEqual(data, 'No content supplied')
         self.assertEqual(response.code, 400)
+
+    @inlineCallbacks
+    def test_resolve_observation(self):
+        yield self.portia.annotate(
+            '27123456789', 'observed-network', 'MNO')
+        response = yield self.request('GET', '/resolve/27123456789')
+        result = yield response.json()
+        self.assertEqual(result['network'], 'MNO')
+        self.assertEqual(result['strategy'], 'observation')
+
+    @inlineCallbacks
+    def test_resolve_prefix_guess(self):
+        response = yield self.request('GET', '/resolve/27763456789')
+        result = yield response.json()
+        self.assertEqual(result['network'], 'VODACOM')
+        self.assertEqual(result['strategy'], 'prefix-guess')
+
+    @inlineCallbacks
+    def test_resolve_prefix_guess_unknown(self):
+        response = yield self.request('GET', '/resolve/000000000000')
+        result = yield response.json()
+        self.assertEqual(result['network'], None)
+        self.assertEqual(result['strategy'], 'prefix-guess')
