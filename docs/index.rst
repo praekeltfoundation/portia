@@ -66,25 +66,25 @@ Running the TCP socket server
 By default this will listen on ``localhost:8001``. You can specify a different
 endpoint with ``--tcp-endpoint=tcp:8080:interface=127.0.0.1`` as an example
 
-JSON is used for the socket protocol. It uses ``\r\n`` as a delimiter::
+JSON is used for the socket protocol. It uses ``\r\n`` as a delimiter
+
+**Get** ::
 
    $ telnet localhost 8001
    > {"cmd": "get", "id": 1, "version": "0.1.0", "request": {"msisdn": "27761234567"}}
    < {"status": "ok", "cmd": "reply", "version": "0.1.0", "reference_id": 1, "response": {"ported-to-timestamp": "2015-10-16T19:26:41.943293", "ported-to": "CELLC", "X-Foo-timestamp": "2015-10-19T18:37:36.294939", "observed-network": "MTN", "observed-network-timestamp": "2015-10-16T19:49:21.130930"}, "reference_cmd": "get"}
 
-::
+**Annotate** ::
 
    $ telnet localhost 8001
    > {"cmd": "annotate", "id": 2, "version": "0.1.0", "request": {"msisdn": "27761234567", "key": "X-Foo", "value": "bar"}}
    < {"status": "ok", "cmd": "reply", "version": "0.1.0", "reference_id": 2, "response": "OK", "reference_cmd": "annotate"}
 
-::
-
    $ telnet localhost 8001
    > {"cmd": "get", "id": 3, "version": "0.1.0", "request": {"msisdn": "27761234567"}}
    < {"status": "ok", "cmd": "reply", "version": "0.1.0", "reference_id": 3, "response": {"ported-to-timestamp": "2015-10-16T19:26:41.943293", "ported-to": "CELLC", "X-Foo-timestamp": "2015-10-19T18:44:33.710381", "observed-network": "MTN", "X-Foo": "bar", "observed-network-timestamp": "2015-10-16T19:49:21.130930"}, "reference_cmd": "get"}
 
-::
+**Resolve** ::
 
    $ telnet localhost 8001
    > {"cmd": "resolve", "id": 4, "version": "0.1.0", "request": {"msisdn": "27761234567"}}
