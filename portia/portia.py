@@ -15,6 +15,11 @@ class Portia(object):
         'do-not-call',
     ])
 
+    RESOLVE_KEYS = frozenset([
+        'observed-network',
+        'ported-to',
+    ])
+
     def __init__(self, redis, prefix="portia:", network_prefix_mapping=None):
         self.redis = redis
         self.prefix = prefix
@@ -64,11 +69,6 @@ class Portia(object):
             raise PortiaException('Invalid Key: %s' % (key,))
         return key
 
-    def resolve(self, msisdn):
-        d = self.get_annotations(msisdn)
-        d.addCallback(self.resolve_cb, msisdn)
-        return d
-
     def network_prefix_lookup(self, msisdn, mapping):
         for key, value in mapping.iteritems():
             if msisdn.startswith(str(key)):
@@ -77,22 +77,35 @@ class Portia(object):
                 return succeed(value)
         return succeed(None)
 
-    def resolve_cb(self, annotations, msisdn):
-        observed_network = annotations.get('observed-network')
-        if observed_network:
-            return {
-                'network': observed_network,
-                'strategy': 'observation',
-                'entry': annotations,
-            }
-        ported_to = annotations.get('ported-to')
-        if ported_to:
-            return {
-                'network': ported_to,
-                'strategy': 'porting-db',
-                'entry': annotations,
-            }
+    def resolve(self, msisdn):
+        d = self.get_annotations(msisdn)
+        d.addCallback(self.resolve_cb, msisdn)
+        return d
 
+    def iterate_annotations(self, annotations):
+        keys = [key for key in annotations.keys()
+                if not key.endswith('-timestamp')]
+        return [(key, annotations[key], annotations['%s-timestamp' % (key,)])
+                for key in keys]
+
+    def resolve_cb(self, annotations, msisdn):
+        resolve_keys = [
+            (key, value, timestamp)
+            for (key, value, timestamp)
+            in self.iterate_annotations(annotations)
+            if key in self.RESOLVE_KEYS]
+        if not any(resolve_keys):
+            return self.resolve_prefix_guess(msisdn, annotations)
+
+        strategy, value, timestamp = max(
+            resolve_keys, key=lambda tuple_: tuple_[2])
+        return {
+            'network': value,
+            'strategy': strategy,
+            'entry': annotations,
+        }
+
+    def resolve_prefix_guess(self, msisdn, annotations):
         d = self.network_prefix_lookup(msisdn, self.network_prefix_mapping)
         d.addCallback(lambda network: {
             'network': network,

@@ -125,7 +125,7 @@ class PortiaTest(TestCase):
             '27123456789', 'DONOR', 'RECIPIENT', datetime.now())
         result = yield self.portia.resolve(msisdn)
         self.assertEqual(result['network'], 'RECIPIENT')
-        self.assertEqual(result['strategy'], 'porting-db')
+        self.assertEqual(result['strategy'], 'ported-to')
 
     @inlineCallbacks
     def test_resolve_observation(self):
@@ -133,7 +133,7 @@ class PortiaTest(TestCase):
             '27123456789', 'observed-network', 'MNO')
         result = yield self.portia.resolve('27123456789')
         self.assertEqual(result['network'], 'MNO')
-        self.assertEqual(result['strategy'], 'observation')
+        self.assertEqual(result['strategy'], 'observed-network')
 
     @inlineCallbacks
     def test_resolve_prefix_guess(self):

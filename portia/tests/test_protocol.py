@@ -144,7 +144,7 @@ class ProtocolTest(TestCase):
         result = yield self.send_command('resolve', msisdn='27123456789')
         response = result['response']
         self.assertEqual(response['network'], 'MNO')
-        self.assertEqual(response['strategy'], 'observation')
+        self.assertEqual(response['strategy'], 'observed-network')
 
     @inlineCallbacks
     def test_resolve_ported_network(self):
@@ -153,7 +153,7 @@ class ProtocolTest(TestCase):
         result = yield self.send_command('resolve', msisdn='27123456789')
         response = result['response']
         self.assertEqual(response['network'], 'MNO')
-        self.assertEqual(response['strategy'], 'porting-db')
+        self.assertEqual(response['strategy'], 'ported-to')
 
     @inlineCallbacks
     def test_resolve_prefix_guess(self):

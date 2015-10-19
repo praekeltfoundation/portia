@@ -119,7 +119,7 @@ class PortiaServerTest(TestCase):
         response = yield self.request('GET', '/resolve/27123456789')
         result = yield response.json()
         self.assertEqual(result['network'], 'MNO')
-        self.assertEqual(result['strategy'], 'observation')
+        self.assertEqual(result['strategy'], 'observed-network')
 
     @inlineCallbacks
     def test_resolve_prefix_guess(self):
