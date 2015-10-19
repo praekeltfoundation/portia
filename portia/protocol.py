@@ -60,13 +60,13 @@ class JsonProtocol(LineReceiver):
     def error(self, failure, command=None, reference_id=None):
         exc = failure.check(JsonProtocolException)
         if exc == JsonProtocolException:
-            cmd = failure.value.command
-            ref_id = failure.value.reference_id
+            command = failure.value.command
+            reference_id = failure.value.reference_id
 
         self.sendLine(json.dumps({
             'status': 'error',
-            'reference_cmd': cmd,
-            'reference_id': ref_id,
+            'reference_cmd': command,
+            'reference_id': reference_id,
             'message': failure.getErrorMessage(),
             'version': self.version,
         }))
