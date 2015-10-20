@@ -29,25 +29,29 @@ def main():
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
-@click.option('--network-prefix-mapping',
-              type=click.Path(exists=True),
+@click.option('--mappings-glob',
+              type=click.Path(),
               default=pkg_resources.resource_filename(
-                  'portia', 'assets/network-prefix-mapping.json'),
-              help='The JSON file with the MNO prefix mappings.')
+                  'portia', 'assets/mappings/*.mapping.json'),
+              help='Mappings files to load, defaults to: %s' % (
+                  pkg_resources.resource_filename(
+                      'portia', 'assets/mappings/*.mapping.json'),
+              ))
 @click.option('--logfile',
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
 def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
-        prefix, network_prefix_mapping, logfile):
-    from .utils import start_redis, start_webserver, start_tcpserver
+        prefix, mappings_glob, logfile):
+    from .utils import (
+        start_redis, start_webserver, start_tcpserver,
+        compile_network_prefix_mappings)
     log.startLogging(logfile)
 
-    with open(network_prefix_mapping) as fp:
-        mapping = json.load(fp)
-
     d = start_redis(redis_uri)
-    d.addCallback(Portia, prefix=prefix, network_prefix_mapping=mapping)
+    d.addCallback(
+        Portia, prefix=prefix,
+        network_prefix_mapping=compile_network_prefix_mappings(mappings_glob))
 
     def start_servers(portia):
         callbacks = []

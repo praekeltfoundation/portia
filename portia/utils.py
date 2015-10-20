@@ -1,8 +1,11 @@
+from glob import glob
+import json
 from urlparse import urlparse
 
 from twisted.internet.endpoints import serverFromString
 from twisted.internet import reactor as default_reactor
 from twisted.web.server import Site
+from twisted.python import log
 
 from txredisapi import Connection
 
@@ -37,3 +40,12 @@ def start_webserver(portia, endpoint_str, reactor=default_reactor):
 def start_tcpserver(portia, endpoint_str, reactor=default_reactor):
     endpoint = serverFromString(reactor, str(endpoint_str))
     return endpoint.listen(JsonProtocolFactory(portia))
+
+
+def compile_network_prefix_mappings(glob_path):
+    mapping = {}
+    for mapping_file in glob(glob_path):
+        log.msg('Loading mapping file: %s.' % (mapping_file,))
+        with open(mapping_file) as fp:
+            mapping.update(json.load(fp))
+    return mapping
