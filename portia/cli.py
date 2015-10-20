@@ -29,18 +29,25 @@ def main():
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
+@click.option('--network-prefix-mapping',
+              type=click.Path(exists=True),
+              default=pkg_resources.resource_filename(
+                  'portia', 'assets/network-prefix-mapping.json'),
+              help='The JSON file with the MNO prefix mappings.')
 @click.option('--logfile',
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
 def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
-        prefix, logfile):
+        prefix, network_prefix_mapping, logfile):
     from .utils import start_redis, start_webserver, start_tcpserver
     log.startLogging(logfile)
+
+    with open(network_prefix_mapping) as fp:
+        mapping = json.load(fp)
+
     d = start_redis(redis_uri)
-    d.addCallback(Portia, prefix=prefix, network_prefix_mapping=json.load(
-        pkg_resources.resource_stream(
-            'portia', 'assets/network-prefix-mapping.json')))
+    d.addCallback(Portia, prefix=prefix, network_prefix_mapping=mapping)
 
     def start_servers(portia):
         callbacks = []
