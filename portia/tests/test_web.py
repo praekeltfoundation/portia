@@ -1,4 +1,3 @@
-import json
 import pkg_resources
 from datetime import datetime
 
@@ -25,8 +24,8 @@ class PortiaServerTest(TestCase):
         self.portia = Portia(
             self.redis,
             network_prefix_mapping=utils.compile_network_prefix_mappings(
-                pkg_resources.resource_filename(
-                    'portia', 'assets/mappings/*.mapping.json')))
+                [pkg_resources.resource_filename(
+                    'portia', 'assets/mappings/*.mapping.json')]))
         self.addCleanup(self.portia.flush)
 
         self.portia_server = PortiaWebServer(self.portia)

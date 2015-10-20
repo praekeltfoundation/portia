@@ -19,8 +19,8 @@ class PortiaTest(TestCase):
         self.portia = Portia(
             self.redis,
             network_prefix_mapping=utils.compile_network_prefix_mappings(
-                pkg_resources.resource_filename(
-                    'portia', 'assets/mappings/*.mapping.json')))
+                [pkg_resources.resource_filename(
+                    'portia', 'assets/mappings/*.mapping.json')]))
         self.addCleanup(self.redis.disconnect)
         self.addCleanup(self.portia.flush)
 

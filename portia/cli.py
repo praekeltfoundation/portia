@@ -29,20 +29,21 @@ def main():
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
-@click.option('--mappings-glob',
+@click.option('--mappings-path',
               type=click.Path(),
-              default=pkg_resources.resource_filename(
-                  'portia', 'assets/mappings/*.mapping.json'),
+              default=[pkg_resources.resource_filename(
+                  'portia', 'assets/mappings/*.mapping.json')],
               help='Mappings files to load, defaults to: %s' % (
                   pkg_resources.resource_filename(
                       'portia', 'assets/mappings/*.mapping.json'),
-              ))
+              ),
+              multiple=True)
 @click.option('--logfile',
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
 def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
-        prefix, mappings_glob, logfile):
+        prefix, mappings_path, logfile):
     from .utils import (
         start_redis, start_webserver, start_tcpserver,
         compile_network_prefix_mappings)
@@ -51,7 +52,7 @@ def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
     d = start_redis(redis_uri)
     d.addCallback(
         Portia, prefix=prefix,
-        network_prefix_mapping=compile_network_prefix_mappings(mappings_glob))
+        network_prefix_mapping=compile_network_prefix_mappings(mappings_path))
 
     def start_servers(portia):
         callbacks = []

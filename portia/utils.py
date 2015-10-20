@@ -1,5 +1,6 @@
 from glob import glob
 import json
+import os
 from urlparse import urlparse
 
 from twisted.internet.endpoints import serverFromString
@@ -42,10 +43,14 @@ def start_tcpserver(portia, endpoint_str, reactor=default_reactor):
     return endpoint.listen(JsonProtocolFactory(portia))
 
 
-def compile_network_prefix_mappings(glob_path):
+def compile_network_prefix_mappings(glob_paths):
     mapping = {}
-    for mapping_file in glob(glob_path):
-        log.msg('Loading mapping file: %s.' % (mapping_file,))
-        with open(mapping_file) as fp:
-            mapping.update(json.load(fp))
+    for glob_path in glob_paths:
+        for mapping_file in glob(glob_path):
+            if not os.path.isfile(mapping_file):
+                continue
+
+            log.msg('Loading mapping file: %s.' % (mapping_file,))
+            with open(mapping_file) as fp:
+                mapping.update(json.load(fp))
     return mapping
