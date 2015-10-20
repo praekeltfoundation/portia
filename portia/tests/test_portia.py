@@ -1,5 +1,4 @@
 import os
-import json
 import pkg_resources
 from datetime import datetime, timedelta
 
@@ -17,9 +16,11 @@ class PortiaTest(TestCase):
     @inlineCallbacks
     def setUp(self):
         self.redis = yield utils.start_redis()
-        self.portia = Portia(self.redis, network_prefix_mapping=json.load(
-            pkg_resources.resource_stream(
-                'portia', 'assets/network-prefix-mapping.json')))
+        self.portia = Portia(
+            self.redis,
+            network_prefix_mapping=utils.compile_network_prefix_mappings(
+                pkg_resources.resource_filename(
+                    'portia', 'assets/mappings/*.mapping.json')))
         self.addCleanup(self.redis.disconnect)
         self.addCleanup(self.portia.flush)
 

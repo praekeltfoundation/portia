@@ -22,9 +22,11 @@ class PortiaServerTest(TestCase):
     def setUp(self):
         self.redis = yield utils.start_redis()
         self.addCleanup(self.redis.disconnect)
-        self.portia = Portia(self.redis, network_prefix_mapping=json.load(
-            pkg_resources.resource_stream(
-                'portia', 'assets/network-prefix-mapping.json')))
+        self.portia = Portia(
+            self.redis,
+            network_prefix_mapping=utils.compile_network_prefix_mappings(
+                pkg_resources.resource_filename(
+                    'portia', 'assets/mappings/*.mapping.json')))
         self.addCleanup(self.portia.flush)
 
         self.portia_server = PortiaWebServer(self.portia)
