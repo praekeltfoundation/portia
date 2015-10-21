@@ -1,5 +1,4 @@
 import json
-from datetime import tzinfo, timedelta
 
 import dateutil.parser
 
@@ -77,7 +76,7 @@ class JsonProtocol(LineReceiver):
 
     def handle_annotate(self, msisdn, key, value, timestamp=None):
         if timestamp:
-            ts = self.portia.local_time(dateutil.parser.parse(timestamp))
+            ts = self.portia.to_utc(dateutil.parser.parse(timestamp))
         else:
             ts = self.portia.now()
         return self.portia.annotate(msisdn, key, value, timestamp=ts)

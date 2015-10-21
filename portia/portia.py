@@ -22,20 +22,18 @@ class Portia(object):
         'ported-to',
     ])
 
-    def __init__(self, redis, prefix="portia:", network_prefix_mapping=None,
-                 timezone=utc):
+    def __init__(self, redis, prefix="portia:", network_prefix_mapping=None):
         self.redis = redis
         self.prefix = prefix
         self.network_prefix_mapping = network_prefix_mapping or {}
-        self.timezone = timezone
 
-    def local_time(self, timestamp):
+    def to_utc(self, timestamp):
         if timestamp.tzinfo:
-            return timestamp.astimezone(self.timezone)
-        return timestamp.replace(tzinfo=self.timezone)
+            return timestamp.astimezone(utc)
+        return timestamp.replace(tzinfo=utc)
 
     def now(self):
-        return self.local_time(datetime.now())
+        return self.to_utc(datetime.now())
 
     def key(self, *parts):
         return '%s%s' % (self.prefix, ':'.join(parts))
@@ -131,7 +129,7 @@ class Portia(object):
         d.addCallback(lambda key: self.redis.hmset(
             self.key(msisdn), {
                 key: value,
-                '%s-timestamp' % (key,): timestamp.isoformat(),
+                '%s-timestamp' % (key,): self.to_utc(timestamp).isoformat(),
             }))
         return d
 

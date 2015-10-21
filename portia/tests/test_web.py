@@ -61,9 +61,9 @@ class PortiaServerTest(TestCase):
         data = yield response.json()
         self.assertEqual(data, {
             'ported-to': 'MNO2',
-            'ported-to-timestamp': timestamp.isoformat(),
+            'ported-to-timestamp': self.portia.to_utc(timestamp).isoformat(),
             'ported-from': 'MNO1',
-            'ported-from-timestamp': timestamp.isoformat(),
+            'ported-from-timestamp': self.portia.to_utc(timestamp).isoformat(),
         })
 
     @inlineCallbacks
@@ -75,7 +75,7 @@ class PortiaServerTest(TestCase):
         data = yield response.json()
         self.assertEqual(data, {
             'ported-to': 'MNO2',
-            'ported-to-timestamp': timestamp.isoformat(),
+            'ported-to-timestamp': self.portia.to_utc(timestamp).isoformat(),
         })
 
     @inlineCallbacks

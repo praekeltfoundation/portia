@@ -38,16 +38,12 @@ def main():
                       'portia', 'assets/mappings/*.mapping.json'),
               ),
               multiple=True)
-@click.option('--timezone',
-              default='UTC',
-              help=('The http://pythonhosted.org/pytz/ timezone to store '
-                    'timestamps in. (defaults to UTC)'))
 @click.option('--logfile',
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
 def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
-        prefix, mappings_path, timezone, logfile):
+        prefix, mappings_path, logfile):
     from .utils import (
         start_redis, start_webserver, start_tcpserver,
         compile_network_prefix_mappings)
@@ -56,8 +52,7 @@ def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
     d = start_redis(redis_uri)
     d.addCallback(
         Portia, prefix=prefix,
-        network_prefix_mapping=compile_network_prefix_mappings(mappings_path),
-        timezone=pytz.timezone(timezone))
+        network_prefix_mapping=compile_network_prefix_mappings(mappings_path))
 
     def start_servers(portia):
         callbacks = []

@@ -45,7 +45,7 @@ class PortiaTest(TestCase):
     @inlineCallbacks
     def test_remove_imported_record(self):
         msisdn = yield self.portia.import_porting_record(
-            '27123456789', 'DONOR', 'RECIPIENT', datetime.now().date())
+            '27123456789', 'DONOR', 'RECIPIENT', datetime.now())
         self.assertTrue((yield self.portia.get_annotations(msisdn)))
         self.assertTrue(
             (yield self.portia.remove_annotations(
@@ -72,9 +72,9 @@ class PortiaTest(TestCase):
             '27123456789')
         self.assertEqual(observation, {
             'ported-to': 'MNO',
-            'ported-to-timestamp': timestamp1.isoformat(),
+            'ported-to-timestamp': self.portia.to_utc(timestamp1).isoformat(),
             'X-foo': 'bar',
-            'X-foo-timestamp': timestamp2.isoformat()
+            'X-foo-timestamp': self.portia.to_utc(timestamp2).isoformat()
         })
 
     @inlineCallbacks
@@ -92,7 +92,7 @@ class PortiaTest(TestCase):
             '27123456789')
         self.assertEqual(observation, {
             'X-foo': 'bar',
-            'X-foo-timestamp': timestamp.isoformat()
+            'X-foo-timestamp': self.portia.to_utc(timestamp).isoformat()
         })
 
     @inlineCallbacks
@@ -108,7 +108,8 @@ class PortiaTest(TestCase):
             (yield self.portia.read_annotation('27123456789', 'ported-to')),
             {
                 'ported-to': 'MNO',
-                'ported-to-timestamp': timestamp.isoformat(),
+                'ported-to-timestamp': self.portia.to_utc(
+                    timestamp).isoformat(),
             })
 
     @inlineCallbacks

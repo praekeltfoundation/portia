@@ -123,7 +123,7 @@ class ProtocolTest(TestCase):
         result = yield self.send_command('get', msisdn='27123456789')
         self.assertEqual(result['response'], {
             'ported-to': 'MNO',
-            'ported-to-timestamp': timestamp.isoformat(),
+            'ported-to-timestamp': self.portia.to_utc(timestamp).isoformat(),
         })
 
     @inlineCallbacks
@@ -137,7 +137,7 @@ class ProtocolTest(TestCase):
         entry = yield self.portia.read_annotation('27123456789', 'X-Foo')
         self.assertEqual(entry, {
             'X-Foo': 'Bar',
-            'X-Foo-timestamp': self.portia.local_time(timestamp).isoformat(),
+            'X-Foo-timestamp': self.portia.to_utc(timestamp).isoformat(),
         })
 
     @inlineCallbacks
