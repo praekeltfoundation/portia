@@ -1,4 +1,5 @@
 import json
+from datetime import tzinfo, timedelta
 
 import dateutil.parser
 
@@ -7,6 +8,21 @@ from twisted.internet.defer import maybeDeferred
 from twisted.protocols.basic import LineReceiver
 
 from .exceptions import JsonProtocolException
+
+
+class UTC(tzinfo):
+
+    def __repr__(self):
+        return "<UTC>"
+
+    def utcoffset(self, dt):
+        return timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return timedelta(0)
 
 
 class JsonProtocol(LineReceiver):
@@ -75,7 +91,13 @@ class JsonProtocol(LineReceiver):
         return self.portia.get_annotations(msisdn)
 
     def handle_annotate(self, msisdn, key, value, timestamp=None):
-        ts = dateutil.parser.parse(timestamp) if timestamp else None
+        if timestamp:
+            ts = dateutil.parser.parse(timestamp)
+            tzinfo = ts.tzinfo
+            if tzinfo is None or tzinfo.utcoffset(ts) is None:
+                ts = ts.replace(tzinfo=UTC())
+        else:
+            ts = None
         return self.portia.annotate(msisdn, key, value, timestamp=ts)
 
     def handle_resolve(self, msisdn):

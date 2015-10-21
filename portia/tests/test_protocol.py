@@ -2,6 +2,8 @@ import json
 import pkg_resources
 from datetime import datetime
 
+from dateutil.parser import parse
+
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, maybeDeferred, Deferred
@@ -126,7 +128,7 @@ class ProtocolTest(TestCase):
 
     @inlineCallbacks
     def test_annotate(self):
-        timestamp = datetime.utcnow()
+        timestamp = parse('2015-10-20T22:56:15.894220+00:00')
         result = yield self.send_command('annotate', msisdn='27123456789',
                                          key='X-Foo', value='Bar',
                                          timestamp=timestamp.isoformat())
@@ -161,3 +163,20 @@ class ProtocolTest(TestCase):
         response = result['response']
         self.assertEqual(response['network'], 'VODACOM')
         self.assertEqual(response['strategy'], 'prefix-guess')
+
+    @inlineCallbacks
+    def test_annotate_timestamp_with_timezone(self):
+        timestamp_za = parse('2015-10-20T23:56:15.894220+02:00')
+        timestamp_utc = parse('2015-10-20T22:56:15.894220+00:00')
+        yield self.send_command('annotate', msisdn='27123456789',
+                                key='observed-network',
+                                value='za-network',
+                                timestamp=timestamp_za.isoformat())
+        yield self.send_command('annotate', msisdn='27123456789',
+                                key='observed-network',
+                                value='utc-network',
+                                timestamp=timestamp_utc.isoformat())
+        result = yield self.send_command('resolve', msisdn='27123456789')
+        # NOTE: We're checking the timezone here, 22pm in +00:00 is more
+        #       recent than 23pm in +02:00
+        self.assertEqual(result['response']['network'], 'utc-network')
