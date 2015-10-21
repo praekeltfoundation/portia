@@ -151,7 +151,8 @@ endpoint with ``--tcp-endpoint=tcp:8080:interface=127.0.0.1`` as an example
 JSON is used for the socket protocol. It uses ``\r\n`` as a delimiter
 
 .. note::   The timestamp values are all in ISO 8601 format. Timezone naive
-            timestamps are assumed to be UTC and stored as UTC internally.
+            timestamps are assumed to be in the timezone that Portia is
+            configured to run in. The default timezone is UTC.
 
 Get
 ---
