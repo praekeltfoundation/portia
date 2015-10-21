@@ -50,7 +50,7 @@ class Portia(object):
         return timestamp.replace(tzinfo=self.timezone)
 
     def now(self):
-        return self.to_utc(datetime.now())
+        return self.to_utc(datetime.utcnow())
 
     def key(self, *parts):
         return '%s%s' % (self.prefix, ':'.join(parts))
