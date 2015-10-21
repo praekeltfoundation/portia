@@ -1,11 +1,27 @@
 import csv
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 
 from twisted.internet.defer import gatherResults, succeed, maybeDeferred
 
-from pytz import utc
-
 from .exceptions import PortiaException
+
+
+class UTC(tzinfo):
+    """
+    UTC implementation taken from Python's docs.
+    """
+
+    def __repr__(self):
+        return "<UTC>"
+
+    def utcoffset(self, dt):
+        return timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return timedelta(0)
 
 
 class Portia(object):
@@ -26,11 +42,12 @@ class Portia(object):
         self.redis = redis
         self.prefix = prefix
         self.network_prefix_mapping = network_prefix_mapping or {}
+        self.timezone = UTC()
 
     def to_utc(self, timestamp):
         if timestamp.tzinfo:
-            return timestamp.astimezone(utc)
-        return timestamp.replace(tzinfo=utc)
+            return timestamp.astimezone(self.timezone)
+        return timestamp.replace(tzinfo=self.timezone)
 
     def now(self):
         return self.to_utc(datetime.now())
