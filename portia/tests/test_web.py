@@ -116,7 +116,8 @@ class PortiaServerTest(TestCase):
     @inlineCallbacks
     def test_resolve_observation(self):
         yield self.portia.annotate(
-            '27123456789', 'observed-network', 'MNO')
+            '27123456789', 'observed-network', 'MNO',
+            timestamp=datetime.now())
         response = yield self.request('GET', '/resolve/27123456789')
         result = yield response.json()
         self.assertEqual(result['network'], 'MNO')

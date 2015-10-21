@@ -69,6 +69,6 @@ class PortiaWebServer(object):
             request.setResponseCode(400)
             return json.dumps('No content supplied')
 
-        d = self.portia.annotate(msisdn, key, content)
+        d = self.portia.annotate(msisdn, key, content, self.portia.now())
         d.addCallback(lambda _: json.dumps(content))
         return d

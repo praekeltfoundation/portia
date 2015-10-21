@@ -3,6 +3,8 @@ from datetime import datetime
 
 from twisted.internet.defer import gatherResults, succeed, maybeDeferred
 
+from pytz import utc
+
 from .exceptions import PortiaException
 
 
@@ -20,10 +22,20 @@ class Portia(object):
         'ported-to',
     ])
 
-    def __init__(self, redis, prefix="portia:", network_prefix_mapping=None):
+    def __init__(self, redis, prefix="portia:", network_prefix_mapping=None,
+                 timezone=utc):
         self.redis = redis
         self.prefix = prefix
         self.network_prefix_mapping = network_prefix_mapping or {}
+        self.timezone = timezone
+
+    def local_time(self, timestamp):
+        if timestamp.tzinfo:
+            return timestamp.astimezone(self.timezone)
+        return timestamp.replace(tzinfo=self.timezone)
+
+    def now(self):
+        return self.local_time(datetime.now())
 
     def key(self, *parts):
         return '%s%s' % (self.prefix, ':'.join(parts))
@@ -114,8 +126,7 @@ class Portia(object):
         })
         return d
 
-    def annotate(self, msisdn, key, value, timestamp=None):
-        timestamp = timestamp or datetime.utcnow()
+    def annotate(self, msisdn, key, value, timestamp):
         d = maybeDeferred(self.validate_annotate_key, key)
         d.addCallback(lambda key: self.redis.hmset(
             self.key(msisdn), {

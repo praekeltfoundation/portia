@@ -129,20 +129,23 @@ class ProtocolTest(TestCase):
     @inlineCallbacks
     def test_annotate(self):
         timestamp = parse('2015-10-20T22:56:15.894220+00:00')
-        result = yield self.send_command('annotate', msisdn='27123456789',
-                                         key='X-Foo', value='Bar',
-                                         timestamp=timestamp.isoformat())
+        result = yield self.send_command(
+            'annotate', msisdn='27123456789',
+            key='X-Foo', value='Bar',
+            timestamp=timestamp.isoformat())
         self.assertEqual(result['status'], 'ok')
         entry = yield self.portia.read_annotation('27123456789', 'X-Foo')
         self.assertEqual(entry, {
             'X-Foo': 'Bar',
-            'X-Foo-timestamp': timestamp.isoformat(),
+            'X-Foo-timestamp': self.portia.local_time(timestamp).isoformat(),
         })
 
     @inlineCallbacks
     def test_resolve_observed_network(self):
-        result = yield self.send_command('annotate', msisdn='27123456789',
-                                         key='observed-network', value='MNO')
+        result = yield self.send_command(
+            'annotate', msisdn='27123456789',
+            key='observed-network', value='MNO',
+            timestamp=self.portia.now().now().isoformat())
         result = yield self.send_command('resolve', msisdn='27123456789')
         response = result['response']
         self.assertEqual(response['network'], 'MNO')
@@ -150,8 +153,10 @@ class ProtocolTest(TestCase):
 
     @inlineCallbacks
     def test_resolve_ported_network(self):
-        result = yield self.send_command('annotate', msisdn='27123456789',
-                                         key='ported-to', value='MNO')
+        result = yield self.send_command(
+            'annotate', msisdn='27123456789',
+            key='ported-to', value='MNO',
+            timestamp=self.portia.now().isoformat())
         result = yield self.send_command('resolve', msisdn='27123456789')
         response = result['response']
         self.assertEqual(response['network'], 'MNO')
