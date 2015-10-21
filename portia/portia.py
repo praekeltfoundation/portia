@@ -1,9 +1,27 @@
 import csv
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 
 from twisted.internet.defer import gatherResults, succeed, maybeDeferred
 
 from .exceptions import PortiaException
+
+
+class UTC(tzinfo):
+    """
+    UTC implementation taken from Python's docs.
+    """
+
+    def __repr__(self):
+        return "<UTC>"
+
+    def utcoffset(self, dt):
+        return timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return timedelta(0)
 
 
 class Portia(object):
@@ -24,6 +42,15 @@ class Portia(object):
         self.redis = redis
         self.prefix = prefix
         self.network_prefix_mapping = network_prefix_mapping or {}
+        self.timezone = UTC()
+
+    def to_utc(self, timestamp):
+        if timestamp.tzinfo:
+            return timestamp.astimezone(self.timezone)
+        return timestamp.replace(tzinfo=self.timezone)
+
+    def now(self):
+        return self.to_utc(datetime.utcnow())
 
     def key(self, *parts):
         return '%s%s' % (self.prefix, ':'.join(parts))
@@ -114,13 +141,12 @@ class Portia(object):
         })
         return d
 
-    def annotate(self, msisdn, key, value, timestamp=None):
-        timestamp = timestamp or datetime.utcnow()
+    def annotate(self, msisdn, key, value, timestamp):
         d = maybeDeferred(self.validate_annotate_key, key)
         d.addCallback(lambda key: self.redis.hmset(
             self.key(msisdn), {
                 key: value,
-                '%s-timestamp' % (key,): timestamp.isoformat(),
+                '%s-timestamp' % (key,): self.to_utc(timestamp).isoformat(),
             }))
         return d
 

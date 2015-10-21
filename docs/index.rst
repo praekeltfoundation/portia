@@ -150,6 +150,10 @@ endpoint with ``--tcp-endpoint=tcp:8080:interface=127.0.0.1`` as an example
 
 JSON is used for the socket protocol. It uses ``\r\n`` as a delimiter
 
+.. note::   The timestamp values are all in ISO 8601 format. Timezone naive
+            timestamps are assumed to be in UTC and will be stored internally
+            as such.
+
 Get
 ---
 

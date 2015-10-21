@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys
-import json
 import pkg_resources
 
 from twisted.python import log

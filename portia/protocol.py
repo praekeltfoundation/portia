@@ -75,7 +75,10 @@ class JsonProtocol(LineReceiver):
         return self.portia.get_annotations(msisdn)
 
     def handle_annotate(self, msisdn, key, value, timestamp=None):
-        ts = dateutil.parser.parse(timestamp) if timestamp else None
+        if timestamp:
+            ts = self.portia.to_utc(dateutil.parser.parse(timestamp))
+        else:
+            ts = self.portia.now()
         return self.portia.annotate(msisdn, key, value, timestamp=ts)
 
     def handle_resolve(self, msisdn):
