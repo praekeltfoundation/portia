@@ -1,28 +1,15 @@
 # -*- coding: utf-8 -*-
 import sys
-from urlparse import urlparse
+import pkg_resources
+
+from twisted.python import log
+from twisted.internet import reactor
+from twisted.internet.defer import gatherResults
+from twisted.internet.task import react
+
+from .portia import Portia
 
 import click
-
-
-class UrlType(click.ParamType):
-    name = 'uri'
-
-    def convert(self, value, param, ctx):
-        try:
-            url = urlparse(value)
-        except (AttributeError, TypeError):
-            self.fail('Invalid url: %s.' % (value,), param, ctx)
-
-        if not url.hostname:
-            self.fail('Missing Redis hostname.')
-
-        try:
-            int(url.path[1:])
-        except (IndexError, ValueError):
-            self.fail('Invalid Redis db index.')
-
-        return url
 
 
 @click.group()
@@ -33,36 +20,48 @@ def main():
 @main.command()
 @click.option('--redis-uri', default='redis://localhost:6379/1',
               help='The redis://hostname:port/db to connect to.',
-              type=UrlType())
-@click.option('--interface', default='localhost',
-              help='The interface to bind to.',
               type=str)
-@click.option('--port', default=8000,
-              help='The TCP port to listen on.',
-              type=int)
+@click.option('--web/--no-web', default=True)
+@click.option('--web-endpoint', default='tcp:8000', type=str)
+@click.option('--tcp/--no-tcp', default=False)
+@click.option('--tcp-endpoint', default='tcp:8001', type=str)
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
+@click.option('--mappings-path',
+              type=click.Path(),
+              default=[pkg_resources.resource_filename(
+                  'portia', 'assets/mappings/*.mapping.json')],
+              help='Mappings files to load, defaults to: %s' % (
+                  pkg_resources.resource_filename(
+                      'portia', 'assets/mappings/*.mapping.json'),
+              ),
+              multiple=True)
 @click.option('--logfile',
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
-@click.option('--debug/--no-debug', default=False,
-              help='Log debug output or not.')
-def run(redis_uri, interface, port, prefix, logfile, debug):
-    from .main import PortiaServer
-    from twisted.internet import reactor
-    from twisted.python import log
-    from txredisapi import Connection
-
+def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
+        prefix, mappings_path, logfile):
+    from .utils import (
+        start_redis, start_webserver, start_tcpserver,
+        compile_network_prefix_mappings)
     log.startLogging(logfile)
 
-    d = Connection(redis_uri.hostname, int(redis_uri.port or 6379),
-                   int(redis_uri.path[1:]))
+    d = start_redis(redis_uri)
     d.addCallback(
-        lambda redis: PortiaServer(redis, prefix=prefix, debug=debug))
-    d.addCallback(lambda portia: portia.app.run(interface, port))
+        Portia, prefix=prefix,
+        network_prefix_mapping=compile_network_prefix_mappings(mappings_path))
 
+    def start_servers(portia):
+        callbacks = []
+        if web:
+            callbacks.append(start_webserver(portia, web_endpoint))
+        if tcp:
+            callbacks.append(start_tcpserver(portia, tcp_endpoint))
+        return gatherResults(callbacks)
+
+    d.addCallback(start_servers)
     reactor.run()
 
 
@@ -74,7 +73,7 @@ def import_():
 @import_.command('porting-db')
 @click.option('--redis-uri', default='redis://localhost:6379/1',
               help='The redis://hostname:port/db to connect to.',
-              type=UrlType())
+              type=str)
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
@@ -82,22 +81,14 @@ def import_():
               help='Where to log output to.',
               type=click.File('a'),
               default=sys.stdout)
-@click.option('--debug/--no-debug', default=True,
-              help='Log debug output or not.')
 @click.option('--header/--no-header', default=True,
               help='Whether the CSV file has a header or not.')
 @click.argument('file', type=click.File())
-def import_porting_db(redis_uri, prefix, logfile, debug, header, file):
-    from .portia import Portia
-    from twisted.internet.task import react
-    from twisted.python import log
-    from txredisapi import Connection
-
+def import_porting_db(redis_uri, prefix, logfile, header, file):
+    from .utils import start_redis
     log.startLogging(logfile)
-
-    d = Connection(redis_uri.hostname, int(redis_uri.port or 6379),
-                   int(redis_uri.path[1:]))
-    d.addCallback(lambda redis: Portia(redis, prefix=prefix))
+    d = start_redis(redis_uri)
+    d.addCallback(Portia, prefix=prefix)
     d.addCallback(lambda portia: portia.import_porting_file(file, header))
     d.addCallback(
         lambda msisdns: [

@@ -1,9 +1,11 @@
 import json
 from functools import wraps
 
+from twisted.internet import reactor
+
 from klein import Klein
 
-from .portia import Portia, PortiaException
+from .exceptions import PortiaException
 
 
 def validate_key(func):
@@ -19,7 +21,7 @@ def validate_key(func):
     return wrapper
 
 
-class PortiaServer(object):
+class PortiaWebServer(object):
     """
     Portia, Number portability as a service
     An API for doing: phone number network lookups.
@@ -29,21 +31,27 @@ class PortiaServer(object):
     """
 
     app = Klein()
+    clock = reactor
     timeout = 5
 
-    def __init__(self, redis, prefix="portia:", debug=False):
-        self.redis = redis
-        self.debug = debug
-        self.portia = Portia(redis, prefix=prefix)
+    def __init__(self, portia):
+        self.portia = portia
 
-    @app.route('/lookup/<msisdn>', methods=['GET'])
+    @app.route('/resolve/<msisdn>', methods=['GET'])
+    def resolve(self, request, msisdn):
+        request.setHeader('Content-Type', 'application/json')
+        d = self.portia.resolve(msisdn)
+        d.addCallback(lambda data: json.dumps(data))
+        return d
+
+    @app.route('/entry/<msisdn>', methods=['GET'])
     def get_annotations(self, request, msisdn):
         request.setHeader('Content-Type', 'application/json')
         d = self.portia.get_annotations(msisdn)
         d.addCallback(lambda data: json.dumps(data))
         return d
 
-    @app.route('/lookup/<msisdn>/<key>', methods=['GET'])
+    @app.route('/entry/<msisdn>/<key>', methods=['GET'])
     @validate_key
     def read_annotation(self, request, msisdn, key):
         request.setHeader('Content-Type', 'application/json')
@@ -51,7 +59,7 @@ class PortiaServer(object):
         d.addCallback(lambda data: json.dumps(data))
         return d
 
-    @app.route('/annotate/<msisdn>/<key>', methods=['PUT'])
+    @app.route('/entry/<msisdn>/<key>', methods=['PUT'])
     @validate_key
     def annotate(self, request, msisdn, key):
         content = request.content.read()
@@ -61,6 +69,6 @@ class PortiaServer(object):
             request.setResponseCode(400)
             return json.dumps('No content supplied')
 
-        d = self.portia.annotate(msisdn, key, content)
+        d = self.portia.annotate(msisdn, key, content, self.portia.now())
         d.addCallback(lambda _: json.dumps(content))
         return d
