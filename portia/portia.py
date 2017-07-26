@@ -1,5 +1,8 @@
 import csv
 import phonenumbers
+from phonenumbers import geocoder
+from phonenumbers import timezone
+from phonenumbers import carrier
 from datetime import datetime, tzinfo, timedelta
 
 from twisted.internet.defer import gatherResults, succeed, maybeDeferred
@@ -116,7 +119,25 @@ class Portia(object):
     def resolve(self, phonenumber):
         d = self.get_annotations(phonenumber)
         d.addCallback(self.resolve_cb, phonenumber)
+        d.addCallback(self.resolve_geocode, phonenumber)
         return d
+
+    def resolve_geocode(self, annotations, phonenumber):
+        defaults = {
+            'msisdn': phonenumbers.format_number(
+                phonenumber, phonenumbers.PhoneNumberFormat.E164),
+            'country_code': phonenumber.country_code,
+            'national_number': phonenumber.national_number,
+            'region_code': geocoder.region_code_for_country_code(
+                phonenumber.country_code),
+            'country_description': geocoder.country_name_for_number(
+                phonenumber, "en"),
+            'original_carrier': carrier.name_for_number(phonenumber, "en"),
+            'timezones': timezone.time_zones_for_number(
+                phonenumber)
+        }
+        defaults.update(annotations)
+        return defaults
 
     def iterate_annotations(self, annotations):
         keys = [key for key in annotations.keys()
