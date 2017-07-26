@@ -6,7 +6,6 @@ from phonenumbers import carrier
 from datetime import datetime, tzinfo, timedelta
 
 from twisted.internet.defer import gatherResults, succeed, maybeDeferred
-from twisted.internet.defer import inlineCallbacks, returnValue
 
 from .exceptions import PortiaException
 
@@ -181,11 +180,8 @@ class Portia(object):
             }))
         return d
 
-    @inlineCallbacks
     def get_annotations(self, phonenumber):
-        r = yield self.redis.hgetall(self.key(as_msisdn(phonenumber)))
-        print 'r', r
-        returnValue(r)
+        return self.redis.hgetall(self.key(as_msisdn(phonenumber)))
 
     def remove_annotations(self, phonenumber, *keys):
         d = gatherResults([
