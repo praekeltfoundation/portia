@@ -162,6 +162,6 @@ class PortiaTest(TestCase):
     @inlineCallbacks
     def test_resolve_prefix_guess_unknown(self):
         result = yield self.portia.resolve(
-            phonenumbers.parse('+000000000000'))
+            phonenumbers.parse('+100000000000'))
         self.assertEqual(result['network'], None)
         self.assertEqual(result['strategy'], 'prefix-guess')

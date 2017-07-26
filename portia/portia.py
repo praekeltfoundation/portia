@@ -106,9 +106,10 @@ class Portia(object):
     def network_prefix_lookup(self, phonenumber, mapping):
         msisdn = as_msisdn(phonenumber)
         for key, value in mapping.iteritems():
-            if msisdn.startswith(str(key)):
+            if msisdn.startswith('+%s' % (key,)):
                 if isinstance(value, dict):
-                    return self.network_prefix_lookup(msisdn, value)
+                    return self.network_prefix_lookup(
+                        phonenumber, value)
                 return succeed(value)
         return succeed(None)
 

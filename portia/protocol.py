@@ -84,8 +84,9 @@ class JsonProtocol(LineReceiver):
             ts = self.portia.now()
         return self.portia.annotate(phonenumber, key, value, timestamp=ts)
 
-    def handle_resolve(self, phonenumber):
-        return self.portia.resolve(phonenumber)
+    def handle_resolve(self, msisdn):
+        return self.portia.resolve(
+            phonenumbers.parse(msisdn))
 
 
 class JsonProtocolFactory(Factory):
