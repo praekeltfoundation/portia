@@ -1,7 +1,9 @@
 import csv
+import phonenumbers
 from datetime import datetime, tzinfo, timedelta
 
 from twisted.internet.defer import gatherResults, succeed, maybeDeferred
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 from .exceptions import PortiaException
 
@@ -22,6 +24,10 @@ class UTC(tzinfo):
 
     def dst(self, dt):
         return timedelta(0)
+
+
+def as_msisdn(pn):
+    return phonenumbers.format_number(pn, phonenumbers.PhoneNumberFormat.E164)
 
 
 class Portia(object):
@@ -73,30 +79,32 @@ class Portia(object):
         return gatherResults(records)
 
     def import_porting_record(self, msisdn, donor, recipient, timestamp):
+        phonenumber = phonenumbers.parse(msisdn)
         d = gatherResults([
             self.annotate(
-                msisdn,
+                phonenumber,
                 self.validate_annotate_key('ported-to'),
                 recipient,
                 timestamp=timestamp),
             self.annotate(
-                msisdn,
+                phonenumber,
                 self.validate_annotate_key('ported-from'),
                 donor,
                 timestamp=timestamp),
         ])
-        d.addCallback(lambda _: msisdn)
+        d.addCallback(lambda _: phonenumber)
         return d
 
-    def remove(self, msisdn):
-        return self.redis.delete(self.key(msisdn))
+    def remove(self, phonenumber):
+        return self.redis.delete(self.key(as_msisdn(phonenumber)))
 
     def validate_annotate_key(self, key):
         if key not in self.ANNOTATION_KEYS and not key.startswith('X-'):
             raise PortiaException('Invalid Key: %s' % (key,))
         return key
 
-    def network_prefix_lookup(self, msisdn, mapping):
+    def network_prefix_lookup(self, phonenumber, mapping):
+        msisdn = as_msisdn(phonenumber)
         for key, value in mapping.iteritems():
             if msisdn.startswith(str(key)):
                 if isinstance(value, dict):
@@ -104,9 +112,9 @@ class Portia(object):
                 return succeed(value)
         return succeed(None)
 
-    def resolve(self, msisdn):
-        d = self.get_annotations(msisdn)
-        d.addCallback(self.resolve_cb, msisdn)
+    def resolve(self, phonenumber):
+        d = self.get_annotations(phonenumber)
+        d.addCallback(self.resolve_cb, phonenumber)
         return d
 
     def iterate_annotations(self, annotations):
@@ -115,14 +123,14 @@ class Portia(object):
         return [(key, annotations[key], annotations['%s-timestamp' % (key,)])
                 for key in keys]
 
-    def resolve_cb(self, annotations, msisdn):
+    def resolve_cb(self, annotations, phonenumber):
         resolve_keys = [
             (key, value, timestamp)
             for (key, value, timestamp)
             in self.iterate_annotations(annotations)
             if key in self.RESOLVE_KEYS]
         if not any(resolve_keys):
-            return self.resolve_prefix_guess(msisdn, annotations)
+            return self.resolve_prefix_guess(phonenumber, annotations)
 
         strategy, value, timestamp = max(
             resolve_keys, key=lambda tuple_: tuple_[2])
@@ -132,8 +140,9 @@ class Portia(object):
             'entry': annotations,
         }
 
-    def resolve_prefix_guess(self, msisdn, annotations):
-        d = self.network_prefix_lookup(msisdn, self.network_prefix_mapping)
+    def resolve_prefix_guess(self, phonenumber, annotations):
+        d = self.network_prefix_lookup(
+            phonenumber, self.network_prefix_mapping)
         d.addCallback(lambda network: {
             'network': network,
             'strategy': 'prefix-guess',
@@ -141,31 +150,36 @@ class Portia(object):
         })
         return d
 
-    def annotate(self, msisdn, key, value, timestamp):
+    def annotate(self, phonenumber, key, value, timestamp):
         d = maybeDeferred(self.validate_annotate_key, key)
         d.addCallback(lambda key: self.redis.hmset(
-            self.key(msisdn), {
+            self.key(as_msisdn(phonenumber)), {
                 key: value,
                 '%s-timestamp' % (key,): self.to_utc(timestamp).isoformat(),
             }))
         return d
 
-    def get_annotations(self, msisdn):
-        return self.redis.hgetall(self.key(msisdn))
+    @inlineCallbacks
+    def get_annotations(self, phonenumber):
+        r = yield self.redis.hgetall(self.key(as_msisdn(phonenumber)))
+        print 'r', r
+        returnValue(r)
 
-    def remove_annotations(self, msisdn, *keys):
+    def remove_annotations(self, phonenumber, *keys):
         d = gatherResults([
             maybeDeferred(self.validate_annotate_key, key) for key in keys])
         d.addCallback(lambda keys: keys + [
             '%s-timestamp' % (key,) for key in keys])
-        d.addCallback(lambda keys: self.redis.hdel(self.key(msisdn), keys))
+        d.addCallback(lambda keys: self.redis.hdel(
+            self.key(as_msisdn(phonenumber)), keys))
         return d
 
-    def read_annotation(self, msisdn, key):
+    def read_annotation(self, phonenumber, key):
         d = maybeDeferred(self.validate_annotate_key, key)
         d.addCallback(lambda key: [key, '%s-timestamp' % (key,)])
         d.addCallback(
-            lambda keys: self.redis.hmget(self.key(msisdn), keys))
+            lambda keys: self.redis.hmget(
+                self.key(as_msisdn(phonenumber)), keys))
         d.addCallback(lambda values: {
             key: values[0],
             '%s-timestamp' % (key,): values[1],
