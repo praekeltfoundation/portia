@@ -1,5 +1,6 @@
 FROM praekeltfoundation/python-base:latest
 
-RUN pip install portia
+COPY . /app/
+RUN pip install -e /app/
 
 CMD ["portia", "run", "--web-endpoint", "tcp:8000"]
