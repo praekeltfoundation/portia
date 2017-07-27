@@ -1,6 +1,7 @@
 import json
 
 import dateutil.parser
+import phonenumbers
 
 from twisted.internet.protocol import Factory
 from twisted.internet.defer import maybeDeferred
@@ -72,17 +73,20 @@ class JsonProtocol(LineReceiver):
         }))
 
     def handle_get(self, msisdn):
-        return self.portia.get_annotations(msisdn)
+        phonenumber = phonenumbers.parse(msisdn)
+        return self.portia.get_annotations(phonenumber)
 
     def handle_annotate(self, msisdn, key, value, timestamp=None):
+        phonenumber = phonenumbers.parse(msisdn)
         if timestamp:
             ts = self.portia.to_utc(dateutil.parser.parse(timestamp))
         else:
             ts = self.portia.now()
-        return self.portia.annotate(msisdn, key, value, timestamp=ts)
+        return self.portia.annotate(phonenumber, key, value, timestamp=ts)
 
     def handle_resolve(self, msisdn):
-        return self.portia.resolve(msisdn)
+        return self.portia.resolve(
+            phonenumbers.parse(msisdn))
 
 
 class JsonProtocolFactory(Factory):
