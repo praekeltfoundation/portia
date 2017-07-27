@@ -6,6 +6,12 @@ cache:
   directories:
     - $HOME/.pip-cache/
 
+env:
+  - TZ=UTC
+  - TZ=US/Eastern
+  - TZ=Europe/Amsterdam
+  - TZ=Africa/Johannesburg
+
 services:
   - redis-server
 
