@@ -35,13 +35,21 @@ class PortiaWebServer(object):
     clock = reactor
     timeout = 5
 
-    def __init__(self, portia):
+    def __init__(self, portia, cors=None):
         self.portia = portia
+        self.cors = cors
+
+    def default_headers(self, request):
+        request.setHeader('Content-Type', 'application/json')
+        if self.cors is not None:
+            request.setHeader(
+                'Access-Control-Allow-Origin',
+                self.cors)
 
     @app.route('/resolve/<msisdn>', methods=['GET'])
     def resolve(self, request, msisdn):
         phonenumber = phonenumbers.parse(msisdn)
-        request.setHeader('Content-Type', 'application/json')
+        self.default_headers(request)
         d = self.portia.resolve(phonenumber)
         d.addCallback(lambda data: json.dumps(data))
         return d
@@ -49,7 +57,7 @@ class PortiaWebServer(object):
     @app.route('/entry/<msisdn>', methods=['GET'])
     def get_annotations(self, request, msisdn):
         phonenumber = phonenumbers.parse(msisdn)
-        request.setHeader('Content-Type', 'application/json')
+        self.default_headers(request)
         d = self.portia.get_annotations(phonenumber)
         d.addCallback(lambda data: json.dumps(data))
         return d
@@ -58,7 +66,7 @@ class PortiaWebServer(object):
     @validate_key
     def read_annotation(self, request, msisdn, key):
         phonenumber = phonenumbers.parse(msisdn)
-        request.setHeader('Content-Type', 'application/json')
+        self.default_headers(request)
         d = self.portia.read_annotation(phonenumber, key)
         d.addCallback(lambda data: json.dumps(data))
         return d
@@ -68,7 +76,7 @@ class PortiaWebServer(object):
     def annotate(self, request, msisdn, key):
         phonenumber = phonenumbers.parse(msisdn)
         content = request.content.read()
-        request.setHeader('Content-Type', 'application/json')
+        self.default_headers(request)
 
         if not content:
             request.setResponseCode(400)

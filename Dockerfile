@@ -3,4 +3,4 @@ FROM praekeltfoundation/python-base:latest
 COPY . /app/
 RUN pip install -e /app/
 
-CMD ["portia", "run", "--web-endpoint", "tcp:8000"]
+CMD ["portia", "run", "--cors", "*", "--web-endpoint", "tcp:8000"]
