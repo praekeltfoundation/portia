@@ -25,6 +25,7 @@ def main():
 @click.option('--web-endpoint', default='tcp:8000', type=str)
 @click.option('--tcp/--no-tcp', default=False)
 @click.option('--tcp-endpoint', default='tcp:8001', type=str)
+@click.option('--cors', default=None, type=str)
 @click.option('--prefix', default='bayes:',
               help='The Redis keyspace prefix to use.',
               type=str)
@@ -42,7 +43,7 @@ def main():
               type=click.File('a'),
               default=sys.stdout)
 def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
-        prefix, mappings_path, logfile):
+        cors, prefix, mappings_path, logfile):
     from .utils import (
         start_redis, start_webserver, start_tcpserver,
         compile_network_prefix_mappings)
@@ -56,7 +57,7 @@ def run(redis_uri, web, web_endpoint, tcp, tcp_endpoint,
     def start_servers(portia):
         callbacks = []
         if web:
-            callbacks.append(start_webserver(portia, web_endpoint))
+            callbacks.append(start_webserver(portia, web_endpoint, cors))
         if tcp:
             callbacks.append(start_tcpserver(portia, tcp_endpoint))
         return gatherResults(callbacks)

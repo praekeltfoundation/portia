@@ -33,9 +33,10 @@ def start_redis(redis_uri='redis://localhost:6379/1'):
                       dbid=int(url.path[1:]))
 
 
-def start_webserver(portia, endpoint_str, reactor=default_reactor):
+def start_webserver(portia, endpoint_str, cors=None, reactor=default_reactor):
     endpoint = serverFromString(reactor, str(endpoint_str))
-    return endpoint.listen(Site(PortiaWebServer(portia).app.resource()))
+    return endpoint.listen(
+        Site(PortiaWebServer(portia, cors=cors).app.resource()))
 
 
 def start_tcpserver(portia, endpoint_str, reactor=default_reactor):

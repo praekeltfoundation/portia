@@ -29,8 +29,8 @@ class PortiaServerTest(TestCase):
                     'portia', 'assets/mappings/*.mapping.json')]))
         self.addCleanup(self.portia.flush)
 
-        self.portia_server = PortiaWebServer(self.portia)
-        self.listener = yield utils.start_webserver(self.portia, 'tcp:0')
+        self.listener = yield utils.start_webserver(
+            self.portia, 'tcp:0', cors='*')
         self.listener_port = self.listener.getHost().port
         self.addCleanup(self.listener.loseConnection)
 
@@ -52,6 +52,13 @@ class PortiaServerTest(TestCase):
         response = yield self.request('GET', '/entry/%2B27123456789')
         data = yield response.json()
         self.assertEqual(data, {})
+
+    @inlineCallbacks
+    def test_cors(self):
+        response = yield self.request('GET', '/entry/%2B27123456789')
+        self.assertEqual(
+            response.headers.getRawHeaders('Access-Control-Allow-Origin'),
+            ['*'])
 
     @inlineCallbacks
     def test_lookup(self):
